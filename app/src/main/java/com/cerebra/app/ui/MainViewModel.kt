@@ -15,24 +15,30 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
     val uiState: StateFlow<MainUiState> = combine(
         userPreferencesRepository.isDarkMode,
         userPreferencesRepository.currentUserId
     ) { isDark, userId ->
-        MainUiState(
-            isLoading = false,
-            isDarkMode = isDark,
-            startDestination = if (userId != null) Screen.Home.route else Screen.Welcome.route
-        )
-    }.stateIn(
+        if (userId != null) {
+            MainUiState.Authenticated(userId, isDark)
+        } else {
+            MainUiState.Unauthenticated(isDark)
+        }
+    }
+    .stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = MainUiState(isLoading = true)
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = MainUiState.Loading
     )
 }
 
-data class MainUiState(
-    val isLoading: Boolean,
-    val isDarkMode: Boolean = false,
-    val startDestination: String = Screen.Welcome.route
-)
+sealed interface MainUiState {
+    val isDarkMode: Boolean
+
+    data object Loading : MainUiState {
+        override val isDarkMode: Boolean = false
+    }
+    data class Authenticated(val userId: Int, override val isDarkMode: Boolean) : MainUiState
+    data class Unauthenticated(override val isDarkMode: Boolean) : MainUiState
+}

@@ -68,8 +68,10 @@ fun TrainingScreen(
                 when (uiState.phase) {
                     TrainingPhase.SETUP -> SetupView(
                         difficulty = uiState.difficulty,
+                        initialTitle = uiState.textEntity?.title ?: "",
+                        initialContent = uiState.textEntity?.content ?: "",
                         onDifficultyChange = viewModel::setDifficulty,
-                        onStart = { viewModel.startTraining(uiState.difficulty) }
+                        onStart = { title, content -> viewModel.startTraining(uiState.difficulty, title, content) }
                     )
                     TrainingPhase.TRAINING -> TrainingView(
                         uiState = uiState,
@@ -87,16 +89,44 @@ fun TrainingScreen(
 @Composable
 fun SetupView(
     difficulty: Difficulty,
+    initialTitle: String,
+    initialContent: String,
     onDifficultyChange: (Difficulty) -> Unit,
-    onStart: () -> Unit
+    onStart: (String, String) -> Unit
 ) {
+    var title by remember { mutableStateOf(initialTitle) }
+    var content by remember { mutableStateOf(initialContent) }
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Настройки тренировки", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Название") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = content,
+            onValueChange = { content = it },
+            label = { Text("Текст") },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 300.dp),
+            minLines = 5,
+            maxLines = 15
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
         
         val sliderValue = when(difficulty) {
             Difficulty.LOW -> 0f
@@ -131,9 +161,13 @@ fun SetupView(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = { onStart(title, content) }, 
+            modifier = Modifier.fillMaxWidth(),
+            enabled = title.isNotBlank() && content.isNotBlank()
+        ) {
             Text("Начать")
         }
     }

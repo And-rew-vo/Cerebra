@@ -23,5 +23,7 @@ data class TextEntity(
     val title: String,
     val content: String,
     val progress: String, // format: "chunkIndex:1,difficulty:LOW" or similar JSON. Using String for flexibility.
+    val savedChunkIndex: Int = 0,
+    val shuffledIndicesJson: String? = null,
     val lastTrainedAt: Long
 )

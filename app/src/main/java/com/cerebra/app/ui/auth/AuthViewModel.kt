@@ -38,14 +38,25 @@ class AuthViewModel @Inject constructor(
             userPreferencesRepository.currentUserId.collect { userId ->
                 if (userId != null) {
                     _uiState.value = _uiState.value.copy(isLoading = true)
-                    // We have an ID, fetch user from DB
-                    // Since AuthRepository doesn't expose getUserById, we might need it.
-                    // Or we assume logic matches.
-                    // Ideally we should use repository.getUserById(userId) but I put that in TextRepository? 
-                    // No, I added getUserById to UserDao but not AuthRepository interface.
-                    // For now, let's just mark as logged in if ID exists, or add method to Repo.
-                    _uiState.value = _uiState.value.copy(isLoggedIn = true, isLoading = false) 
-                    // Note: We might want to fetch User object to display name, etc. but strictly for auth flow skip:
+                    try {
+                        val user = authRepository.getUserById(userId)
+                        if (user != null) {
+                            _uiState.value = _uiState.value.copy(
+                                isLoggedIn = true, 
+                                isLoading = false,
+                                user = user
+                            )
+                        } else {
+                            // User ID exists but user not found in DB? Inconsistency.
+                            // Maybe logout or just stop loading.
+                            _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = false)
+                        }
+                    } catch (e: Exception) {
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                    }
+                } else {
+                     // Ensure state is reset if ID is null (logout)
+                     _uiState.value = AuthUiState() 
                 }
             }
         }

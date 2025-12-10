@@ -47,7 +47,7 @@ public final class TextDao_Impl implements TextDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `texts` (`id`,`userId`,`title`,`content`,`progress`,`lastTrainedAt`) VALUES (nullif(?, 0),?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `texts` (`id`,`userId`,`title`,`content`,`progress`,`savedChunkIndex`,`shuffledIndicesJson`,`lastTrainedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -58,7 +58,13 @@ public final class TextDao_Impl implements TextDao {
         statement.bindString(3, entity.getTitle());
         statement.bindString(4, entity.getContent());
         statement.bindString(5, entity.getProgress());
-        statement.bindLong(6, entity.getLastTrainedAt());
+        statement.bindLong(6, entity.getSavedChunkIndex());
+        if (entity.getShuffledIndicesJson() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getShuffledIndicesJson());
+        }
+        statement.bindLong(8, entity.getLastTrainedAt());
       }
     };
     this.__deletionAdapterOfTextEntity = new EntityDeletionOrUpdateAdapter<TextEntity>(__db) {
@@ -78,7 +84,7 @@ public final class TextDao_Impl implements TextDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `texts` SET `id` = ?,`userId` = ?,`title` = ?,`content` = ?,`progress` = ?,`lastTrainedAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `texts` SET `id` = ?,`userId` = ?,`title` = ?,`content` = ?,`progress` = ?,`savedChunkIndex` = ?,`shuffledIndicesJson` = ?,`lastTrainedAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -89,8 +95,14 @@ public final class TextDao_Impl implements TextDao {
         statement.bindString(3, entity.getTitle());
         statement.bindString(4, entity.getContent());
         statement.bindString(5, entity.getProgress());
-        statement.bindLong(6, entity.getLastTrainedAt());
-        statement.bindLong(7, entity.getId());
+        statement.bindLong(6, entity.getSavedChunkIndex());
+        if (entity.getShuffledIndicesJson() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getShuffledIndicesJson());
+        }
+        statement.bindLong(8, entity.getLastTrainedAt());
+        statement.bindLong(9, entity.getId());
       }
     };
   }
@@ -166,6 +178,8 @@ public final class TextDao_Impl implements TextDao {
           final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
           final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
           final int _cursorIndexOfProgress = CursorUtil.getColumnIndexOrThrow(_cursor, "progress");
+          final int _cursorIndexOfSavedChunkIndex = CursorUtil.getColumnIndexOrThrow(_cursor, "savedChunkIndex");
+          final int _cursorIndexOfShuffledIndicesJson = CursorUtil.getColumnIndexOrThrow(_cursor, "shuffledIndicesJson");
           final int _cursorIndexOfLastTrainedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "lastTrainedAt");
           final List<TextEntity> _result = new ArrayList<TextEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
@@ -180,9 +194,17 @@ public final class TextDao_Impl implements TextDao {
             _tmpContent = _cursor.getString(_cursorIndexOfContent);
             final String _tmpProgress;
             _tmpProgress = _cursor.getString(_cursorIndexOfProgress);
+            final int _tmpSavedChunkIndex;
+            _tmpSavedChunkIndex = _cursor.getInt(_cursorIndexOfSavedChunkIndex);
+            final String _tmpShuffledIndicesJson;
+            if (_cursor.isNull(_cursorIndexOfShuffledIndicesJson)) {
+              _tmpShuffledIndicesJson = null;
+            } else {
+              _tmpShuffledIndicesJson = _cursor.getString(_cursorIndexOfShuffledIndicesJson);
+            }
             final long _tmpLastTrainedAt;
             _tmpLastTrainedAt = _cursor.getLong(_cursorIndexOfLastTrainedAt);
-            _item = new TextEntity(_tmpId,_tmpUserId,_tmpTitle,_tmpContent,_tmpProgress,_tmpLastTrainedAt);
+            _item = new TextEntity(_tmpId,_tmpUserId,_tmpTitle,_tmpContent,_tmpProgress,_tmpSavedChunkIndex,_tmpShuffledIndicesJson,_tmpLastTrainedAt);
             _result.add(_item);
           }
           return _result;
@@ -216,6 +238,8 @@ public final class TextDao_Impl implements TextDao {
           final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
           final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
           final int _cursorIndexOfProgress = CursorUtil.getColumnIndexOrThrow(_cursor, "progress");
+          final int _cursorIndexOfSavedChunkIndex = CursorUtil.getColumnIndexOrThrow(_cursor, "savedChunkIndex");
+          final int _cursorIndexOfShuffledIndicesJson = CursorUtil.getColumnIndexOrThrow(_cursor, "shuffledIndicesJson");
           final int _cursorIndexOfLastTrainedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "lastTrainedAt");
           final TextEntity _result;
           if (_cursor.moveToFirst()) {
@@ -229,9 +253,17 @@ public final class TextDao_Impl implements TextDao {
             _tmpContent = _cursor.getString(_cursorIndexOfContent);
             final String _tmpProgress;
             _tmpProgress = _cursor.getString(_cursorIndexOfProgress);
+            final int _tmpSavedChunkIndex;
+            _tmpSavedChunkIndex = _cursor.getInt(_cursorIndexOfSavedChunkIndex);
+            final String _tmpShuffledIndicesJson;
+            if (_cursor.isNull(_cursorIndexOfShuffledIndicesJson)) {
+              _tmpShuffledIndicesJson = null;
+            } else {
+              _tmpShuffledIndicesJson = _cursor.getString(_cursorIndexOfShuffledIndicesJson);
+            }
             final long _tmpLastTrainedAt;
             _tmpLastTrainedAt = _cursor.getLong(_cursorIndexOfLastTrainedAt);
-            _result = new TextEntity(_tmpId,_tmpUserId,_tmpTitle,_tmpContent,_tmpProgress,_tmpLastTrainedAt);
+            _result = new TextEntity(_tmpId,_tmpUserId,_tmpTitle,_tmpContent,_tmpProgress,_tmpSavedChunkIndex,_tmpShuffledIndicesJson,_tmpLastTrainedAt);
           } else {
             _result = null;
           }

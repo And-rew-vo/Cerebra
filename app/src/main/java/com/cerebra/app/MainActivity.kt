@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.cerebra.app.ui.navigation.CerebraNavGraph
+import com.cerebra.app.ui.navigation.Screen
 import com.cerebra.app.ui.theme.CerebraTheme
+import com.cerebra.app.ui.MainUiState
 import dagger.hilt.android.AndroidEntryPoint
 
 import androidx.compose.runtime.collectAsState
@@ -22,15 +24,21 @@ class MainActivity : ComponentActivity() {
             val uiState by viewModel.uiState.collectAsState()
             
             CerebraTheme(darkTheme = uiState.isDarkMode) {
-                if (uiState.isLoading) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        androidx.compose.material3.CircularProgressIndicator()
+                when (val state = uiState) {
+                    is MainUiState.Loading -> {
+                        androidx.compose.foundation.layout.Box(
+                            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                            contentAlignment = androidx.compose.ui.Alignment.Center
+                        ) {
+                            androidx.compose.material3.CircularProgressIndicator()
+                        }
                     }
-                } else {
-                    CerebraNavGraph(startDestination = uiState.startDestination)
+                    is MainUiState.Authenticated -> {
+                        CerebraNavGraph(startDestination = Screen.Home.route)
+                    }
+                    is MainUiState.Unauthenticated -> {
+                        CerebraNavGraph(startDestination = Screen.Welcome.route)
+                    }
                 }
             }
         }

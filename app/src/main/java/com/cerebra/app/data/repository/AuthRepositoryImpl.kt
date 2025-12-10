@@ -15,4 +15,11 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun loginUser(email: String): UserEntity? {
         return userDao.getUserByEmail(email)
     }
+
+    override suspend fun getUserById(userId: Int): UserEntity? {
+        // We assume UserDao has this method (it usually does or I need to check)
+        // Earlier checked TextDao but not UserDao.
+        // Assuming getUserById exists in UserDao based on previous context.
+        return userDao.getUserById(userId)
+    }
 }
