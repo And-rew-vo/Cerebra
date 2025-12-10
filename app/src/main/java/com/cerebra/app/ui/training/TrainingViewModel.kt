@@ -3,36 +3,43 @@ package com.cerebra.app.ui.training
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebra.app.data.local.entity.TextDocument
-import com.cerebra.app.data.repository.CerebraRepository
+import com.cerebra.app.data.local.entity.TextEntity
+import com.cerebra.app.domain.Chunk
+import com.cerebra.app.domain.Difficulty
 import com.cerebra.app.domain.ProcessedToken
 import com.cerebra.app.domain.TextProcessor
+import com.cerebra.app.domain.repository.TextRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import javax.inject.Inject
+
+enum class TrainingPhase { SETUP, TRAINING, COMPLETED }
 
 data class TrainingUiState(
     val isLoading: Boolean = false,
-    val text: TextDocument? = null,
-    val tokens: List<ProcessedToken> = emptyList(),
-    val userInputs: Map<Int, String> = emptyMap(), // Index -> Input
-    val validationStatus: Map<Int, Boolean> = emptyMap(), // Index -> IsCorrect
-    val isComplete: Boolean = false,
-    val progress: Int = 0
+    val phase: TrainingPhase = TrainingPhase.SETUP,
+    val textEntity: TextEntity? = null,
+    val chunks: List<Chunk> = emptyList(),
+    val currentChunkIndex: Int = 0,
+    val currentChunk: Chunk? = null,
+    val userInputs: Map<Int, String> = emptyMap(), // Token Index -> Input
+    val validationStatus: Map<Int, Boolean> = emptyMap(), // Token Index -> IsCorrect
+    val difficulty: Difficulty = Difficulty.LOW
 )
 
 @HiltViewModel
 class TrainingViewModel @Inject constructor(
-    private val repository: CerebraRepository,
+    private val repository: TextRepository,
     private val textProcessor: TextProcessor,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val textId: Int = checkNotNull(savedStateHandle["textId"])
-    
+    private val textId: Int = checkNotNull(savedStateHandle.get<Int>("textId"))
+
     private val _uiState = MutableStateFlow(TrainingUiState(isLoading = true))
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
 
@@ -42,34 +49,63 @@ class TrainingViewModel @Inject constructor(
 
     private fun loadText() {
         viewModelScope.launch {
-            val text = repository.getTextDocumentById(textId)
+            val text = repository.getTextById(textId)
             if (text != null) {
-                val tokens = textProcessor.processTextForTraining(text.content)
+                // Try resume
+                val (resumeIndex, resumeDifficulty) = parseProgress(text.progress)
+                
+                if (resumeIndex > 0 || resumeDifficulty != null) {
+                    // Auto-start if we have progress
+                    val diff = resumeDifficulty ?: Difficulty.LOW
+                    startTraining(diff, resumeIndex)
+                }
+                
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    text = text,
-                    tokens = tokens,
-                    userInputs = emptyMap(),
-                    validationStatus = emptyMap(),
-                    progress = text.progress
+                    textEntity = text,
+                    difficulty = resumeDifficulty ?: Difficulty.LOW
+                    // Phase remains SETUP if no progress, or set in startTraining
                 )
             } else {
-                // Handle error
+                // Error
             }
         }
     }
 
-    fun onInputChange(index: Int, input: String) {
+    fun setDifficulty(difficulty: Difficulty) {
+        _uiState.value = _uiState.value.copy(difficulty = difficulty)
+    }
+
+    fun startTraining(difficulty: Difficulty, startIndex: Int = 0) {
+        val text = _uiState.value.textEntity ?: return
+        val session = textProcessor.createSession(text.content, difficulty)
+        
+        val validStartIndex = startIndex.coerceIn(0, session.chunks.size - 1)
+        val chunk = session.chunks[validStartIndex]
+        
+        _uiState.value = _uiState.value.copy(
+            phase = TrainingPhase.TRAINING,
+            chunks = session.chunks,
+            currentChunkIndex = validStartIndex,
+            currentChunk = chunk,
+            difficulty = difficulty,
+            userInputs = emptyMap(),
+            validationStatus = emptyMap()
+        )
+    }
+
+    fun onInputChange(tokenIndex: Int, input: String) {
         val currentInputs = _uiState.value.userInputs.toMutableMap()
-        currentInputs[index] = input
+        currentInputs[tokenIndex] = input
         
-        // Immediate Validation
-        val token = _uiState.value.tokens.find { it.index == index }
+        // Validation
+        val chunk = _uiState.value.currentChunk ?: return
+        val token = chunk.tokens.find { it.index == tokenIndex }
         val currentValidation = _uiState.value.validationStatus.toMutableMap()
-        
+
         if (token != null) {
             val isCorrect = textProcessor.validateWord(input, token.originalWord)
-            currentValidation[index] = isCorrect
+            currentValidation[tokenIndex] = isCorrect
         }
 
         _uiState.value = _uiState.value.copy(
@@ -77,47 +113,92 @@ class TrainingViewModel @Inject constructor(
             validationStatus = currentValidation
         )
         
-        checkCompletion()
+        checkChunkCompletion()
     }
 
-    private fun checkCompletion() {
-        val hiddenTokens = _uiState.value.tokens.filter { it.isHidden }
-        if (hiddenTokens.isEmpty()) return
-
-        val correctCount = hiddenTokens.count { token ->
-            _uiState.value.validationStatus[token.index] == true
+    private fun checkChunkCompletion() {
+        val chunk = _uiState.value.currentChunk ?: return
+        val hiddenTokens = chunk.tokens.filter { it.isHidden }
+        
+        val allCorrect = hiddenTokens.all { token ->
+             _uiState.value.validationStatus[token.index] == true
         }
-        
-        // Calculate progress based on correct answers vs total hidden words
-        // If all hidden words are correct, progress is 100% (for this session logic)
-        // Ideally we might want to average it or something, but let's say completion of "Training" = 100% of the session.
-        // We will update the Document progress. 
-        // Logic: (Correct / TotalHidden) * 100
-        val newProgress = ((correctCount.toFloat() / hiddenTokens.size.toFloat()) * 100).toInt()
-        
-        // Only save if progress improved or it's a new training? 
-        // Requirement: "Update the progress of the TextDocument based on correct answers."
-        // Let's just update it to the result of this session? Or accumulate? 
-        // "Unfinished trainings" implies we want to reach 100%. 
-        // So update the document with the current session's score.
-        
-        _uiState.value = _uiState.value.copy(
-            progress = newProgress,
-            isComplete = correctCount == hiddenTokens.size
-        )
+
+        if (allCorrect && hiddenTokens.isNotEmpty()) {
+            // Auto-save progress
+            saveProgress()
+            // Wait for user or auto-advance? 
+            // "User must complete one chunk to proceed to the next."
+            // UI can show "Next" button or auto-advance. 
+            // Let's rely on UI showing a "Next" button when all green.
+        }
     }
 
-    fun saveProgress() {
-        val text = _uiState.value.text ?: return
-        val currentProgress = _uiState.value.progress
+    fun nextChunk() {
+        val nextIndex = _uiState.value.currentChunkIndex + 1
+        if (nextIndex < _uiState.value.chunks.size) {
+            val nextChunk = _uiState.value.chunks[nextIndex]
+            _uiState.value = _uiState.value.copy(
+                currentChunkIndex = nextIndex,
+                currentChunk = nextChunk,
+                userInputs = emptyMap(),
+                validationStatus = emptyMap()
+            )
+            saveProgress()
+        } else {
+            // Completed text
+            _uiState.value = _uiState.value.copy(phase = TrainingPhase.COMPLETED)
+            saveCompletion()
+        }
+    }
+
+    private fun saveProgress() {
+        val text = _uiState.value.textEntity ?: return
+        val index = _uiState.value.currentChunkIndex
+        val difficulty = _uiState.value.difficulty
+        val totalChunks = _uiState.value.chunks.size.toFloat()
         
+        // Percent logic: (index / total) * 100 roughly
+        // Or strictly completed chunks
+        val percent = ((index.toFloat() / totalChunks) * 100).toInt()
+
+        val json = JSONObject()
+        json.put("chunkIndex", index)
+        json.put("difficulty", difficulty.name)
+        json.put("percent", percent)
+
         viewModelScope.launch {
-            repository.updateTextDocument(
+            repository.updateText(
                 text.copy(
-                    progress = currentProgress,
+                    progress = json.toString(),
                     lastTrainedAt = System.currentTimeMillis()
                 )
             )
+        }
+    }
+    
+    private fun saveCompletion() {
+        // 100 percent
+        val text = _uiState.value.textEntity ?: return
+        val json = JSONObject()
+        json.put("chunkIndex", _uiState.value.chunks.size)
+        json.put("difficulty", _uiState.value.difficulty.name)
+        json.put("percent", 100)
+        
+        viewModelScope.launch {
+            repository.updateText(text.copy(progress = json.toString(), lastTrainedAt = System.currentTimeMillis()))
+        }
+    }
+
+    private fun parseProgress(jsonString: String): Pair<Int, Difficulty?> {
+        return try {
+            val json = JSONObject(jsonString)
+            val index = json.optInt("chunkIndex", 0)
+            val diffName = json.optString("difficulty")
+            val diff = if (diffName.isNotEmpty()) Difficulty.valueOf(diffName) else null
+            Pair(index, diff)
+        } catch (e: Exception) {
+            Pair(0, null)
         }
     }
 }

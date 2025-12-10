@@ -2,7 +2,9 @@ package com.cerebra.app;
 
 import com.cerebra.app.di.DatabaseModule;
 import com.cerebra.app.di.RepositoryModule;
+import com.cerebra.app.ui.MainViewModel_HiltModules;
 import com.cerebra.app.ui.auth.AuthViewModel_HiltModules;
+import com.cerebra.app.ui.main.AddTextViewModel_HiltModules;
 import com.cerebra.app.ui.main.HomeViewModel_HiltModules;
 import com.cerebra.app.ui.main.LibraryViewModel_HiltModules;
 import com.cerebra.app.ui.main.ProfileViewModel_HiltModules;
@@ -50,8 +52,10 @@ import dagger.hilt.android.scopes.ViewScoped;
 import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponent;
 import dagger.hilt.migration.DisableInstallInCheck;
+import javax.annotation.processing.Generated;
 import javax.inject.Singleton;
 
+@Generated("dagger.hilt.processor.internal.root.RootProcessor")
 public final class CerebraApplication_HiltComponents {
   private CerebraApplication_HiltComponents() {
   }
@@ -60,6 +64,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ServiceC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ServiceCBuilderModule {
     @Binds
     ServiceComponentBuilder bind(ServiceC.Builder builder);
@@ -69,6 +74,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ActivityRetainedC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ActivityRetainedCBuilderModule {
     @Binds
     ActivityRetainedComponentBuilder bind(ActivityRetainedC.Builder builder);
@@ -78,6 +84,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ActivityC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ActivityCBuilderModule {
     @Binds
     ActivityComponentBuilder bind(ActivityC.Builder builder);
@@ -87,6 +94,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ViewModelC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewModelCBuilderModule {
     @Binds
     ViewModelComponentBuilder bind(ViewModelC.Builder builder);
@@ -96,6 +104,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ViewC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewCBuilderModule {
     @Binds
     ViewComponentBuilder bind(ViewC.Builder builder);
@@ -105,6 +114,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = FragmentC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface FragmentCBuilderModule {
     @Binds
     FragmentComponentBuilder bind(FragmentC.Builder builder);
@@ -114,6 +124,7 @@ public final class CerebraApplication_HiltComponents {
       subcomponents = ViewWithFragmentC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewWithFragmentCBuilderModule {
     @Binds
     ViewWithFragmentComponentBuilder bind(ViewWithFragmentC.Builder builder);
@@ -149,12 +160,14 @@ public final class CerebraApplication_HiltComponents {
 
   @Subcomponent(
       modules = {
+          AddTextViewModel_HiltModules.KeyModule.class,
           AuthViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HomeViewModel_HiltModules.KeyModule.class,
           LibraryViewModel_HiltModules.KeyModule.class,
+          MainViewModel_HiltModules.KeyModule.class,
           ProfileViewModel_HiltModules.KeyModule.class,
           TrainingViewModel_HiltModules.KeyModule.class
       }
@@ -192,10 +205,12 @@ public final class CerebraApplication_HiltComponents {
 
   @Subcomponent(
       modules = {
+          AddTextViewModel_HiltModules.BindsModule.class,
           AuthViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
           LibraryViewModel_HiltModules.BindsModule.class,
+          MainViewModel_HiltModules.BindsModule.class,
           ProfileViewModel_HiltModules.BindsModule.class,
           TrainingViewModel_HiltModules.BindsModule.class
       }

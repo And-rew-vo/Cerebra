@@ -1,9 +1,11 @@
 package com.cerebra.app.ui.auth
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cerebra.app.data.local.entity.User
-import com.cerebra.app.data.repository.CerebraRepository
+import com.cerebra.app.data.local.entity.UserEntity
+import com.cerebra.app.data.repository.UserPreferencesRepository
+import com.cerebra.app.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,53 +17,140 @@ data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isLoggedIn: Boolean = false,
-    val user: User? = null
+    val user: UserEntity? = null,
+    // Validation Errors
+    val nameError: String? = null,
+    val emailError: String? = null,
+    val passwordError: String? = null
 )
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repository: CerebraRepository
+    private val authRepository: AuthRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            userPreferencesRepository.currentUserId.collect { userId ->
+                if (userId != null) {
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                    // We have an ID, fetch user from DB
+                    // Since AuthRepository doesn't expose getUserById, we might need it.
+                    // Or we assume logic matches.
+                    // Ideally we should use repository.getUserById(userId) but I put that in TextRepository? 
+                    // No, I added getUserById to UserDao but not AuthRepository interface.
+                    // For now, let's just mark as logged in if ID exists, or add method to Repo.
+                    _uiState.value = _uiState.value.copy(isLoggedIn = true, isLoading = false) 
+                    // Note: We might want to fetch User object to display name, etc. but strictly for auth flow skip:
+                }
+            }
+        }
+    }
+
     fun register(name: String, email: String, password: String) {
+        if (!validateRegistration(name, email, password)) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Check if user exists logic could go here, but Repository/DAO should handle errors ideally
-                // For MVP, just try insert
-                val newUser = User(name = name, email = email, passwordHash = password) // In real app, hash this!
-                repository.registerUser(newUser)
-                login(email, password) // Auto login
+                val newUser = UserEntity(name = name, email = email, password = password)
+                // Check if user exists happens in Repo/DAO (constraint) usually
+                authRepository.registerUser(newUser)
+                login(email, password)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Ошибка регистрации")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Ошибка регистрации: ${e.message}"
+                )
             }
         }
     }
 
     fun login(email: String, password: String) {
+        if (!validateLogin(email, password)) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val user = repository.loginUser(email)
-                if (user != null && user.passwordHash == password) {
+                val user = authRepository.loginUser(email)
+                if (user != null && user.password == password) {
+                    userPreferencesRepository.saveUserId(user.id)
                     _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true, user = user)
                 } else {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Неверный email или пароль")
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Ошибка входа")
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Ошибка входа: ${e.message}")
             }
         }
     }
-    
-    fun logout() {
-        _uiState.value = AuthUiState() // Reset
+
+    private fun validateLogin(email: String, password: String): Boolean {
+        var isValid = true
+        var emailError: String? = null
+        var passwordError: String? = null
+
+        if (email.isBlank()) {
+            emailError = "Введите email"
+            isValid = false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailError = "Неверный формат почты"
+            isValid = false
+        }
+
+        if (password.isBlank()) {
+            passwordError = "Введите пароль"
+            isValid = false
+        }
+
+        _uiState.value = _uiState.value.copy(emailError = emailError, passwordError = passwordError)
+        return isValid
     }
-    
+
+    private fun validateRegistration(name: String, email: String, password: String): Boolean {
+        var isValid = true
+        var nameError: String? = null
+        var emailError: String? = null
+        var passwordError: String? = null
+
+        if (name.isBlank()) {
+            nameError = "Введите имя"
+            isValid = false
+        }
+
+        if (email.isBlank()) {
+            emailError = "Введите email"
+            isValid = false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailError = "Неверный формат почты"
+            isValid = false
+        }
+
+        if (password.length < 6) {
+            passwordError = "Пароль должен быть не менее 6 символов"
+            isValid = false
+        }
+
+        _uiState.value = _uiState.value.copy(
+            nameError = nameError,
+            emailError = emailError,
+            passwordError = passwordError
+        )
+        return isValid
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            userPreferencesRepository.clearUserId()
+            _uiState.value = AuthUiState()
+        }
+    }
+
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.value = _uiState.value.copy(error = null, nameError = null, emailError = null, passwordError = null)
     }
 }

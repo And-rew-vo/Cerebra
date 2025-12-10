@@ -11,8 +11,8 @@ import androidx.room.util.DBUtil;
 import androidx.room.util.TableInfo;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteOpenHelper;
-import com.cerebra.app.data.local.dao.TextDocumentDao;
-import com.cerebra.app.data.local.dao.TextDocumentDao_Impl;
+import com.cerebra.app.data.local.dao.TextDao;
+import com.cerebra.app.data.local.dao.TextDao_Impl;
 import com.cerebra.app.data.local.dao.UserDao;
 import com.cerebra.app.data.local.dao.UserDao_Impl;
 import java.lang.Class;
@@ -33,25 +33,25 @@ import javax.annotation.processing.Generated;
 public final class AppDatabase_Impl extends AppDatabase {
   private volatile UserDao _userDao;
 
-  private volatile TextDocumentDao _textDocumentDao;
+  private volatile TextDao _textDao;
 
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(1) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `email` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `name` TEXT NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `text_documents` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `progress` INTEGER NOT NULL, `lastTrainedAt` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_text_documents_userId` ON `text_documents` (`userId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `email` TEXT NOT NULL, `password` TEXT NOT NULL, `name` TEXT NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `texts` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `progress` TEXT NOT NULL, `lastTrainedAt` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_texts_userId` ON `texts` (`userId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0e11692cb747aedb2be36c13cbe2a022')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6a8ca1831d8f890d5b646e635c27c144')");
       }
 
       @Override
       public void dropAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS `users`");
-        db.execSQL("DROP TABLE IF EXISTS `text_documents`");
+        db.execSQL("DROP TABLE IF EXISTS `texts`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -99,38 +99,38 @@ public final class AppDatabase_Impl extends AppDatabase {
         final HashMap<String, TableInfo.Column> _columnsUsers = new HashMap<String, TableInfo.Column>(4);
         _columnsUsers.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUsers.put("email", new TableInfo.Column("email", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUsers.put("passwordHash", new TableInfo.Column("passwordHash", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUsers.put("password", new TableInfo.Column("password", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUsers.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysUsers = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesUsers = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoUsers = new TableInfo("users", _columnsUsers, _foreignKeysUsers, _indicesUsers);
         final TableInfo _existingUsers = TableInfo.read(db, "users");
         if (!_infoUsers.equals(_existingUsers)) {
-          return new RoomOpenHelper.ValidationResult(false, "users(com.cerebra.app.data.local.entity.User).\n"
+          return new RoomOpenHelper.ValidationResult(false, "users(com.cerebra.app.data.local.entity.UserEntity).\n"
                   + " Expected:\n" + _infoUsers + "\n"
                   + " Found:\n" + _existingUsers);
         }
-        final HashMap<String, TableInfo.Column> _columnsTextDocuments = new HashMap<String, TableInfo.Column>(6);
-        _columnsTextDocuments.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTextDocuments.put("userId", new TableInfo.Column("userId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTextDocuments.put("title", new TableInfo.Column("title", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTextDocuments.put("content", new TableInfo.Column("content", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTextDocuments.put("progress", new TableInfo.Column("progress", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTextDocuments.put("lastTrainedAt", new TableInfo.Column("lastTrainedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysTextDocuments = new HashSet<TableInfo.ForeignKey>(1);
-        _foreignKeysTextDocuments.add(new TableInfo.ForeignKey("users", "CASCADE", "NO ACTION", Arrays.asList("userId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesTextDocuments = new HashSet<TableInfo.Index>(1);
-        _indicesTextDocuments.add(new TableInfo.Index("index_text_documents_userId", false, Arrays.asList("userId"), Arrays.asList("ASC")));
-        final TableInfo _infoTextDocuments = new TableInfo("text_documents", _columnsTextDocuments, _foreignKeysTextDocuments, _indicesTextDocuments);
-        final TableInfo _existingTextDocuments = TableInfo.read(db, "text_documents");
-        if (!_infoTextDocuments.equals(_existingTextDocuments)) {
-          return new RoomOpenHelper.ValidationResult(false, "text_documents(com.cerebra.app.data.local.entity.TextDocument).\n"
-                  + " Expected:\n" + _infoTextDocuments + "\n"
-                  + " Found:\n" + _existingTextDocuments);
+        final HashMap<String, TableInfo.Column> _columnsTexts = new HashMap<String, TableInfo.Column>(6);
+        _columnsTexts.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTexts.put("userId", new TableInfo.Column("userId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTexts.put("title", new TableInfo.Column("title", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTexts.put("content", new TableInfo.Column("content", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTexts.put("progress", new TableInfo.Column("progress", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTexts.put("lastTrainedAt", new TableInfo.Column("lastTrainedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysTexts = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysTexts.add(new TableInfo.ForeignKey("users", "CASCADE", "NO ACTION", Arrays.asList("userId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesTexts = new HashSet<TableInfo.Index>(1);
+        _indicesTexts.add(new TableInfo.Index("index_texts_userId", false, Arrays.asList("userId"), Arrays.asList("ASC")));
+        final TableInfo _infoTexts = new TableInfo("texts", _columnsTexts, _foreignKeysTexts, _indicesTexts);
+        final TableInfo _existingTexts = TableInfo.read(db, "texts");
+        if (!_infoTexts.equals(_existingTexts)) {
+          return new RoomOpenHelper.ValidationResult(false, "texts(com.cerebra.app.data.local.entity.TextEntity).\n"
+                  + " Expected:\n" + _infoTexts + "\n"
+                  + " Found:\n" + _existingTexts);
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "0e11692cb747aedb2be36c13cbe2a022", "b822905d8709ff74c300b8ecb8ea0d8d");
+    }, "6a8ca1831d8f890d5b646e635c27c144", "1040a7782f3937d6f608395888f57ce1");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -141,7 +141,7 @@ public final class AppDatabase_Impl extends AppDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "users","text_documents");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "users","texts");
   }
 
   @Override
@@ -158,7 +158,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         _db.execSQL("PRAGMA defer_foreign_keys = TRUE");
       }
       _db.execSQL("DELETE FROM `users`");
-      _db.execSQL("DELETE FROM `text_documents`");
+      _db.execSQL("DELETE FROM `texts`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -177,7 +177,7 @@ public final class AppDatabase_Impl extends AppDatabase {
   protected Map<Class<?>, List<Class<?>>> getRequiredTypeConverters() {
     final HashMap<Class<?>, List<Class<?>>> _typeConvertersMap = new HashMap<Class<?>, List<Class<?>>>();
     _typeConvertersMap.put(UserDao.class, UserDao_Impl.getRequiredConverters());
-    _typeConvertersMap.put(TextDocumentDao.class, TextDocumentDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(TextDao.class, TextDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -211,15 +211,15 @@ public final class AppDatabase_Impl extends AppDatabase {
   }
 
   @Override
-  public TextDocumentDao textDocumentDao() {
-    if (_textDocumentDao != null) {
-      return _textDocumentDao;
+  public TextDao textDao() {
+    if (_textDao != null) {
+      return _textDao;
     } else {
       synchronized(this) {
-        if(_textDocumentDao == null) {
-          _textDocumentDao = new TextDocumentDao_Impl(this);
+        if(_textDao == null) {
+          _textDao = new TextDao_Impl(this);
         }
-        return _textDocumentDao;
+        return _textDao;
       }
     }
   }

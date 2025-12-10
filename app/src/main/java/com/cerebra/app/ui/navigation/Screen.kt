@@ -10,4 +10,5 @@ sealed class Screen(val route: String) {
     object Training : Screen("training/{textId}") { // Pass text ID
         fun createRoute(textId: Int) = "training/$textId"
     }
+    object AddText : Screen("add_text")
 }

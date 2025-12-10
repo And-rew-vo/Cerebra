@@ -1,10 +1,14 @@
 [
     {
-        "merged": "com.cerebra.app-debug-58:/xml_backup_rules.xml.flat",
-        "source": "com.cerebra.app-main-60:/xml/backup_rules.xml"
+        "merged": "com.cerebra.app-debug-60:/xml_data_extraction_rules.xml.flat",
+        "source": "com.cerebra.app-main-62:/xml/data_extraction_rules.xml"
     },
     {
-        "merged": "com.cerebra.app-debug-58:/xml_data_extraction_rules.xml.flat",
-        "source": "com.cerebra.app-main-60:/xml/data_extraction_rules.xml"
+        "merged": "com.cerebra.app-debug-60:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.cerebra.app-main-62:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.cerebra.app-debug-60:/xml_backup_rules.xml.flat",
+        "source": "com.cerebra.app-main-62:/xml/backup_rules.xml"
     }
 ]

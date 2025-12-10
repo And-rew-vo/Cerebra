@@ -1,80 +1,99 @@
 package com.cerebra.app.domain
 
-import com.cerebra.app.data.local.entity.TextDocument
 import javax.inject.Inject
 import kotlin.random.Random
+
+enum class Difficulty { LOW, HIGH }
 
 data class ProcessedToken(
     val originalWord: String,
     val displayValue: String,
     val isHidden: Boolean,
-    val index: Int
+    val index: Int // Global index or chunk index? Let's use chunk index for UI simplicity.
+)
+
+data class Trainingsession(
+    val chunks: List<Chunk>,
+    val difficulty: Difficulty
+)
+
+data class Chunk(
+    val id: Int,
+    val tokens: List<ProcessedToken>,
+    val content: String
 )
 
 class TextProcessor @Inject constructor() {
 
-    /**
-     * Processes text for training.
-     * Logic:
-     * 1. Tokenize by space.
-     * 2. Identify candidates (words length > 2 usually, effectively random).
-     * 3. Hide ~25% of words.
-     */
-    fun processTextForTraining(content: String): List<ProcessedToken> {
-        // Regex to split but keep punctuation attached or separate?
-        // For MVP simplicity: split by spaces, punctuation is part of the "word" for matching.
-        // Better UX: Split punctuation so user doesn't have to type "Hello," vs "Hello".
-        // Let's do a simple whitespace split first.
-        val tokens = content.split(Regex("\\s+")).filter { it.isNotEmpty() }
-        
-        val totalTokens = tokens.size
-        if (totalTokens == 0) return emptyList()
+    fun createSession(content: String, difficulty: Difficulty): Trainingsession {
+        val chunks = when (difficulty) {
+            Difficulty.LOW -> splitIntoSentences(content)
+            Difficulty.HIGH -> splitIntoParagraphs(content)
+        }
 
-        val indicesToHideCount = (totalTokens * 0.25).toInt().coerceAtLeast(1)
-        val hiddenIndices = mutableSetOf<Int>()
+        val processedChunks = chunks.mapIndexed { index, chunkText ->
+            processChunk(chunkText, index, difficulty)
+        }
+
+        return Trainingsession(processedChunks, difficulty)
+    }
+
+    private fun splitIntoSentences(content: String): List<String> {
+        val sentences = mutableListOf<String>()
+        val regex = Regex("(?<=[.!?])\\s+") // Split after punctuation followed by space
+        sentences.addAll(content.split(regex).filter { it.isNotBlank() })
+        return sentences
+    }
+
+    private fun splitIntoParagraphs(content: String): List<String> {
+        return content.split("\n\n", "\r\n\r\n").filter { it.isNotBlank() }
+    }
+
+    private fun processChunk(content: String, chunkId: Int, difficulty: Difficulty): Chunk {
+        // Split by whitespace
+        val words = content.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val tokens = mutableListOf<ProcessedToken>()
         
-        // Randomly select indices
-        while (hiddenIndices.size < indicesToHideCount && hiddenIndices.size < totalTokens) {
-            val idx = Random.nextInt(totalTokens)
-            // Filter: Don't hide very short words if possible, unless text is all short.
-            // But user requirement is just "~20-30% of random words".
-            if (!hiddenIndices.contains(idx)) {
-                hiddenIndices.add(idx)
+        val indicesToHide = when (difficulty) {
+            Difficulty.LOW -> {
+                // Hide 1-2 words
+                val count = Random.nextInt(1, 3).coerceAtMost(words.size)
+                pickRandomIndices(words.size, count)
+            }
+            Difficulty.HIGH -> {
+                // Many words hidden, ~50%
+                val count = (words.size * 0.5).toInt().coerceAtLeast(1)
+                pickRandomIndices(words.size, count)
             }
         }
 
-        return tokens.mapIndexed { index, word ->
-            val isHidden = hiddenIndices.contains(index)
-            ProcessedToken(
-                originalWord = word,
-                displayValue = if (isHidden) "" else word,
-                isHidden = isHidden,
-                index = index
+        words.forEachIndexed { index, word ->
+            val isHidden = indicesToHide.contains(index)
+            tokens.add(
+                ProcessedToken(
+                    originalWord = word,
+                    displayValue = if (isHidden) "" else word,
+                    isHidden = isHidden,
+                    index = index
+                )
             )
         }
+
+        return Chunk(chunkId, tokens, content)
     }
-    
-    /**
-     * Validates input against the original word.
-     * Case-insensitive check.
-     * Also handles punctuation if it was attached.
-     * Ideally, we should strip punctuation for strict checking, 
-     * but strictly "text memorization" often implies exact punctuation.
-     * Let's be lenient: Case insensitive, trim.
-     */
+
+    private fun pickRandomIndices(total: Int, count: Int): Set<Int> {
+        val indices = mutableSetOf<Int>()
+        while (indices.size < count && indices.size < total) {
+            indices.add(Random.nextInt(total))
+        }
+        return indices
+    }
+
     fun validateWord(input: String, original: String): Boolean {
-        // Simple normalization
-        val normalizedInput = input.trim().lowercase()
-        val normalizedOriginal = original.trim().lowercase()
-        
-        // If the original has punctuation (e.g. "Hello,"), and user types "hello", that might be annoying.
-        // Let's strip standard punctuation from the END for comparison sake 
-        // if exact match fails.
-        if (normalizedInput == normalizedOriginal) return true
-        
-        val punctuation = listOf('.', ',', '!', '?', ';', ':')
-        val originalStripped = original.trimEnd { it in punctuation }.lowercase()
-        
-        return normalizedInput == originalStripped
+        // Remove punctuation from original for check
+        val cleanOriginal = original.filter { it.isLetterOrDigit() }.lowercase()
+        val cleanInput = input.filter { it.isLetterOrDigit() }.lowercase()
+        return cleanOriginal == cleanInput
     }
 }

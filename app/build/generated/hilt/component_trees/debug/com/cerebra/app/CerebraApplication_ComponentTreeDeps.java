@@ -21,8 +21,12 @@ import hilt_aggregated_deps._com_cerebra_app_CerebraApplication_GeneratedInjecto
 import hilt_aggregated_deps._com_cerebra_app_MainActivity_GeneratedInjector;
 import hilt_aggregated_deps._com_cerebra_app_di_DatabaseModule;
 import hilt_aggregated_deps._com_cerebra_app_di_RepositoryModule;
+import hilt_aggregated_deps._com_cerebra_app_ui_MainViewModel_HiltModules_BindsModule;
+import hilt_aggregated_deps._com_cerebra_app_ui_MainViewModel_HiltModules_KeyModule;
 import hilt_aggregated_deps._com_cerebra_app_ui_auth_AuthViewModel_HiltModules_BindsModule;
 import hilt_aggregated_deps._com_cerebra_app_ui_auth_AuthViewModel_HiltModules_KeyModule;
+import hilt_aggregated_deps._com_cerebra_app_ui_main_AddTextViewModel_HiltModules_BindsModule;
+import hilt_aggregated_deps._com_cerebra_app_ui_main_AddTextViewModel_HiltModules_KeyModule;
 import hilt_aggregated_deps._com_cerebra_app_ui_main_HomeViewModel_HiltModules_BindsModule;
 import hilt_aggregated_deps._com_cerebra_app_ui_main_HomeViewModel_HiltModules_KeyModule;
 import hilt_aggregated_deps._com_cerebra_app_ui_main_LibraryViewModel_HiltModules_BindsModule;
@@ -74,8 +78,12 @@ import hilt_aggregated_deps._dagger_hilt_android_internal_modules_HiltWrapper_Ac
         _com_cerebra_app_MainActivity_GeneratedInjector.class,
         _com_cerebra_app_di_DatabaseModule.class,
         _com_cerebra_app_di_RepositoryModule.class,
+        _com_cerebra_app_ui_MainViewModel_HiltModules_BindsModule.class,
+        _com_cerebra_app_ui_MainViewModel_HiltModules_KeyModule.class,
         _com_cerebra_app_ui_auth_AuthViewModel_HiltModules_BindsModule.class,
         _com_cerebra_app_ui_auth_AuthViewModel_HiltModules_KeyModule.class,
+        _com_cerebra_app_ui_main_AddTextViewModel_HiltModules_BindsModule.class,
+        _com_cerebra_app_ui_main_AddTextViewModel_HiltModules_KeyModule.class,
         _com_cerebra_app_ui_main_HomeViewModel_HiltModules_BindsModule.class,
         _com_cerebra_app_ui_main_HomeViewModel_HiltModules_KeyModule.class,
         _com_cerebra_app_ui_main_LibraryViewModel_HiltModules_BindsModule.class,

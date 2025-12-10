@@ -26,6 +26,7 @@ import com.cerebra.app.ui.auth.AuthViewModel
 import com.cerebra.app.ui.auth.LoginScreen
 import com.cerebra.app.ui.auth.RegisterScreen
 import com.cerebra.app.ui.auth.WelcomeScreen
+import com.cerebra.app.ui.main.AddTextScreen
 import com.cerebra.app.ui.main.HomeScreen
 import com.cerebra.app.ui.main.LibraryScreen
 import com.cerebra.app.ui.main.ProfileScreen
@@ -38,16 +39,12 @@ fun CerebraNavGraph(
     val navController = rememberNavController()
     val authState by authViewModel.uiState.collectAsState()
     
-    // Determine start destination based on auth state?
-    // For simplicity, we start at Welcome. Auth logic flows from there.
-    
     val bottomNavItems = listOf(
         Screen.Home,
         Screen.Library,
         Screen.Profile
     )
     
-    // Check if current route is a bottom nav route
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomNav = currentRoute in listOf(Screen.Home.route, Screen.Library.route, Screen.Profile.route)
@@ -109,6 +106,7 @@ fun CerebraNavGraph(
                             popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
+                    onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                     viewModel = authViewModel
                 )
             }
@@ -120,13 +118,10 @@ fun CerebraNavGraph(
                             popUpTo(Screen.Welcome.route) { inclusive = true }
                         }
                     },
+                    onNavigateToLogin = { navController.navigate(Screen.Login.route) },
                     viewModel = authViewModel
                 )
             }
-            
-            // Protected routes (Require User)
-            // Ideally we'd wrap these or check nullability of authState.user
-            // Assuming user is present if we navigated here.
             
             composable(Screen.Home.route) {
                 authState.user?.let { user ->
@@ -140,11 +135,13 @@ fun CerebraNavGraph(
             }
             
             composable(Screen.Library.route) {
-                authState.user?.let { user ->
+                authState.user?.let { _ ->
                     LibraryScreen(
-                        user = user,
                         onNavigateToTraining = { textId -> 
                             navController.navigate(Screen.Training.createRoute(textId))
+                        },
+                        onNavigateToAddText = {
+                            navController.navigate(Screen.AddText.route)
                         }
                     )
                 }
@@ -164,11 +161,16 @@ fun CerebraNavGraph(
                 }
             }
             
+            composable(Screen.AddText.route) {
+                AddTextScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
             composable(
                 route = Screen.Training.route,
                 arguments = listOf(navArgument("textId") { type = NavType.IntType })
             ) {
-                // Hilt will inject TrainingViewModel using the backStackEntry which contains arguments
                 TrainingScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )

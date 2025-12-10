@@ -1,20 +1,20 @@
 package com.cerebra.app.ui.main
 
-import com.cerebra.app.data.local.entity.TextDocument
-import com.cerebra.app.data.local.entity.User
+import com.cerebra.app.data.local.entity.TextEntity
+import com.cerebra.app.data.local.entity.UserEntity
 
 data class HomeUiState(
-    val unfinishedTexts: List<TextDocument> = emptyList(),
+    val unfinishedTexts: List<TextEntity> = emptyList(),
     val isLoading: Boolean = false
 )
 
 data class LibraryUiState(
-    val allTexts: List<TextDocument> = emptyList(),
+    val allTexts: List<TextEntity> = emptyList(),
     val isLoading: Boolean = false
 )
 
 data class ProfileUiState(
-    val user: User? = null,
+    val user: UserEntity? = null,
     val textCount: Int = 0,
-    val averageProgress: Float = 0f
+    val isDarkMode: Boolean = false
 )

@@ -1,6 +1,7 @@
 package com.cerebra.app.ui.main;
 
-import com.cerebra.app.data.repository.CerebraRepository;
+import com.cerebra.app.data.repository.UserPreferencesRepository;
+import com.cerebra.app.domain.repository.TextRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -22,22 +23,28 @@ import javax.inject.Provider;
     "KotlinInternalInJava"
 })
 public final class ProfileViewModel_Factory implements Factory<ProfileViewModel> {
-  private final Provider<CerebraRepository> repositoryProvider;
+  private final Provider<TextRepository> repositoryProvider;
 
-  public ProfileViewModel_Factory(Provider<CerebraRepository> repositoryProvider) {
+  private final Provider<UserPreferencesRepository> userPreferencesRepositoryProvider;
+
+  public ProfileViewModel_Factory(Provider<TextRepository> repositoryProvider,
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
     this.repositoryProvider = repositoryProvider;
+    this.userPreferencesRepositoryProvider = userPreferencesRepositoryProvider;
   }
 
   @Override
   public ProfileViewModel get() {
-    return newInstance(repositoryProvider.get());
+    return newInstance(repositoryProvider.get(), userPreferencesRepositoryProvider.get());
   }
 
-  public static ProfileViewModel_Factory create(Provider<CerebraRepository> repositoryProvider) {
-    return new ProfileViewModel_Factory(repositoryProvider);
+  public static ProfileViewModel_Factory create(Provider<TextRepository> repositoryProvider,
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
+    return new ProfileViewModel_Factory(repositoryProvider, userPreferencesRepositoryProvider);
   }
 
-  public static ProfileViewModel newInstance(CerebraRepository repository) {
-    return new ProfileViewModel(repository);
+  public static ProfileViewModel newInstance(TextRepository repository,
+      UserPreferencesRepository userPreferencesRepository) {
+    return new ProfileViewModel(repository, userPreferencesRepository);
   }
 }
