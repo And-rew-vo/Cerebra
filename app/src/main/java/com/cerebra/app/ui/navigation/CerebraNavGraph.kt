@@ -34,6 +34,7 @@ import com.cerebra.app.ui.training.TrainingScreen
 
 @Composable
 fun CerebraNavGraph(
+    startDestination: String,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
@@ -89,7 +90,7 @@ fun CerebraNavGraph(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Welcome.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Welcome.route) {

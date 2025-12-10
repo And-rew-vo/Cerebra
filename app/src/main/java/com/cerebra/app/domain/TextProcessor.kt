@@ -3,7 +3,7 @@ package com.cerebra.app.domain
 import javax.inject.Inject
 import kotlin.random.Random
 
-enum class Difficulty { LOW, HIGH }
+enum class Difficulty { LOW, MEDIUM, HIGH }
 
 data class ProcessedToken(
     val originalWord: String,
@@ -27,7 +27,7 @@ class TextProcessor @Inject constructor() {
 
     fun createSession(content: String, difficulty: Difficulty): Trainingsession {
         val chunks = when (difficulty) {
-            Difficulty.LOW -> splitIntoSentences(content)
+            Difficulty.LOW, Difficulty.MEDIUM -> splitIntoSentences(content)
             Difficulty.HIGH -> splitIntoParagraphs(content)
         }
 
@@ -58,6 +58,11 @@ class TextProcessor @Inject constructor() {
             Difficulty.LOW -> {
                 // Hide 1-2 words
                 val count = Random.nextInt(1, 3).coerceAtMost(words.size)
+                pickRandomIndices(words.size, count)
+            }
+            Difficulty.MEDIUM -> {
+                // Hide ~25% words
+                val count = (words.size * 0.25).toInt().coerceAtLeast(1)
                 pickRandomIndices(words.size, count)
             }
             Difficulty.HIGH -> {

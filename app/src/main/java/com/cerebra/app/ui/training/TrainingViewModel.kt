@@ -28,7 +28,9 @@ data class TrainingUiState(
     val currentChunk: Chunk? = null,
     val userInputs: Map<Int, String> = emptyMap(), // Token Index -> Input
     val validationStatus: Map<Int, Boolean> = emptyMap(), // Token Index -> IsCorrect
-    val difficulty: Difficulty = Difficulty.LOW
+    val difficulty: Difficulty = Difficulty.LOW,
+    val shuffledIndices: List<Int> = emptyList(),
+    val activeHintTokenIndex: Int? = null
 )
 
 @HiltViewModel
@@ -52,12 +54,12 @@ class TrainingViewModel @Inject constructor(
             val text = repository.getTextById(textId)
             if (text != null) {
                 // Try resume
-                val (resumeIndex, resumeDifficulty) = parseProgress(text.progress)
+                val (resumeIndex, resumeDifficulty, resumeIndices) = parseProgress(text.progress)
                 
                 if (resumeIndex > 0 || resumeDifficulty != null) {
                     // Auto-start if we have progress
                     val diff = resumeDifficulty ?: Difficulty.LOW
-                    startTraining(diff, resumeIndex)
+                    startTraining(diff, resumeIndex, resumeIndices)
                 }
                 
                 _uiState.value = _uiState.value.copy(
@@ -76,21 +78,57 @@ class TrainingViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(difficulty = difficulty)
     }
 
-    fun startTraining(difficulty: Difficulty, startIndex: Int = 0) {
+    fun startTraining(
+        difficulty: Difficulty, 
+        startIndex: Int = 0, 
+        restoredIndices: List<Int> = emptyList()
+    ) {
         val text = _uiState.value.textEntity ?: return
         val session = textProcessor.createSession(text.content, difficulty)
         
+        // Setup indices (shuffle if not restoring)
+        val indices = if (restoredIndices.isNotEmpty() && restoredIndices.size == session.chunks.size) {
+            restoredIndices
+        } else {
+            (session.chunks.indices).shuffled()
+        }
+
         val validStartIndex = startIndex.coerceIn(0, session.chunks.size - 1)
-        val chunk = session.chunks[validStartIndex]
+        
+        // Get chunk based on shuffled order
+        val realChunkIndex = indices[validStartIndex]
+        val chunk = session.chunks[realChunkIndex]
         
         _uiState.value = _uiState.value.copy(
             phase = TrainingPhase.TRAINING,
             chunks = session.chunks,
+            shuffledIndices = indices,
             currentChunkIndex = validStartIndex,
             currentChunk = chunk,
             difficulty = difficulty,
             userInputs = emptyMap(),
             validationStatus = emptyMap()
+        )
+    }
+
+    fun restartTraining() {
+        val difficulty = _uiState.value.difficulty
+        startTraining(difficulty, 0, emptyList())
+    }
+
+    fun revealHint(tokenIndex: Int) {
+        val currentUiState = _uiState.value
+        
+        // Toggle hint visibility
+        val newActiveHintIndex = if (currentUiState.activeHintTokenIndex == tokenIndex) null else tokenIndex
+
+        // Mark as "used hint" (count as wrong) but DO NOT fill input
+        val currentValidation = currentUiState.validationStatus.toMutableMap()
+        currentValidation[tokenIndex] = false 
+        
+        _uiState.value = currentUiState.copy(
+            activeHintTokenIndex = newActiveHintIndex,
+            validationStatus = currentValidation
         )
     }
 
@@ -137,10 +175,11 @@ class TrainingViewModel @Inject constructor(
     fun nextChunk() {
         val nextIndex = _uiState.value.currentChunkIndex + 1
         if (nextIndex < _uiState.value.chunks.size) {
-            val nextChunk = _uiState.value.chunks[nextIndex]
+            val realChunkIndex = _uiState.value.shuffledIndices[nextIndex]
+            val nextChunk = _uiState.value.chunks[realChunkIndex]
             _uiState.value = _uiState.value.copy(
                 currentChunkIndex = nextIndex,
-                currentChunk = nextChunk,
+                currentChunk = nextChunk, // Fix: logic previously assumed sequential
                 userInputs = emptyMap(),
                 validationStatus = emptyMap()
             )
@@ -166,6 +205,9 @@ class TrainingViewModel @Inject constructor(
         json.put("chunkIndex", index)
         json.put("difficulty", difficulty.name)
         json.put("percent", percent)
+        
+        val indicesArray = org.json.JSONArray(_uiState.value.shuffledIndices)
+        json.put("shuffledIndices", indicesArray)
 
         viewModelScope.launch {
             repository.updateText(
@@ -190,15 +232,24 @@ class TrainingViewModel @Inject constructor(
         }
     }
 
-    private fun parseProgress(jsonString: String): Pair<Int, Difficulty?> {
+    private fun parseProgress(jsonString: String): Triple<Int, Difficulty?, List<Int>> {
         return try {
             val json = JSONObject(jsonString)
             val index = json.optInt("chunkIndex", 0)
             val diffName = json.optString("difficulty")
             val diff = if (diffName.isNotEmpty()) Difficulty.valueOf(diffName) else null
-            Pair(index, diff)
+            
+            val indicesJson = json.optJSONArray("shuffledIndices")
+            val indices = mutableListOf<Int>()
+            if (indicesJson != null) {
+                for (i in 0 until indicesJson.length()) {
+                    indices.add(indicesJson.getInt(i))
+                }
+            }
+            
+            Triple(index, diff, indices)
         } catch (e: Exception) {
-            Pair(0, null)
+            Triple(0, null, emptyList())
         }
     }
 }
