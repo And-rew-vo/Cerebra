@@ -49,7 +49,7 @@ fun AddTextScreen(
                 label = { Text("Текст для запоминания") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), // Take remaining space
+                    .weight(1f),
                 minLines = 5,
                 maxLines = Int.MAX_VALUE
             )

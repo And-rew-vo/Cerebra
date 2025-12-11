@@ -23,7 +23,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "cerebra_database.db"
-        ).fallbackToDestructiveMigration() // For MVP simplicity
+        ).fallbackToDestructiveMigration()
          .build()
     }
 

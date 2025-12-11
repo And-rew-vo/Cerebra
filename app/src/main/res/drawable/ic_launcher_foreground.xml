@@ -6,7 +6,6 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Central Node -->
     <path
         android:pathData="M54,54m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0">
         <aapt:attr name="android:fillColor">
@@ -21,20 +20,17 @@
         </aapt:attr>
     </path>
 
-    <!-- Connections -->
     <path
         android:pathData="M54,54 L30,30 M54,54 L78,30 M54,54 L30,78 M54,54 L78,78 M30,30 L78,30 L78,78 L30,78 Z"
         android:strokeColor="#8000B0FF"
         android:strokeWidth="2"
         android:strokeLineCap="round"/>
 
-    <!-- Orbital Nodes -->
     <path android:pathData="M30,30m-6,0a6,6 0,1 1,12 0a12,12 0,1 1,-12 0" android:fillColor="#FF6200EE"/>
     <path android:pathData="M78,30m-6,0a6,6 0,1 1,12 0a12,12 0,1 1,-12 0" android:fillColor="#FF3700B3"/>
     <path android:pathData="M30,78m-6,0a6,6 0,1 1,12 0a12,12 0,1 1,-12 0" android:fillColor="#FF03DAC5"/>
     <path android:pathData="M78,78m-6,0a6,6 0,1 1,12 0a12,12 0,1 1,-12 0" android:fillColor="#FF018786"/>
 
-    <!-- Outer Ring Abstract -->
     <path
         android:pathData="M54,10 A44,44 0 0 1 98,54"
         android:strokeColor="#40FFFFFF"

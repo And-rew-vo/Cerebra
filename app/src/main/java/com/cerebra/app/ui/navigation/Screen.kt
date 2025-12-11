@@ -7,7 +7,7 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Library : Screen("library")
     object Profile : Screen("profile")
-    object Training : Screen("training/{textId}") { // Pass text ID
+    object Training : Screen("training/{textId}") {
         fun createRoute(textId: Int) = "training/$textId"
     }
     object AddText : Screen("add_text")

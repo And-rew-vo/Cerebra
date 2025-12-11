@@ -25,7 +25,7 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     val isDarkMode: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[IS_DARK_MODE_KEY] ?: false // Default to light mode (false)
+        preferences[IS_DARK_MODE_KEY] ?: false
     }
 
     suspend fun saveUserId(userId: Int) {

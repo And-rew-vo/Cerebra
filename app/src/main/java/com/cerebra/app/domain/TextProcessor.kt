@@ -9,7 +9,7 @@ data class ProcessedToken(
     val originalWord: String,
     val displayValue: String,
     val isHidden: Boolean,
-    val index: Int // Global index or chunk index? Let's use chunk index for UI simplicity.
+    val index: Int
 )
 
 data class Trainingsession(
@@ -40,7 +40,7 @@ class TextProcessor @Inject constructor() {
 
     private fun splitIntoSentences(content: String): List<String> {
         val sentences = mutableListOf<String>()
-        val regex = Regex("(?<=[.!?])\\s+") // Split after punctuation followed by space
+        val regex = Regex("(?<=[.!?])\\s+")
         sentences.addAll(content.split(regex).filter { it.isNotBlank() })
         return sentences
     }
@@ -50,28 +50,24 @@ class TextProcessor @Inject constructor() {
     }
 
     private fun processChunk(content: String, chunkId: Int, difficulty: Difficulty): Chunk {
-        // Split by whitespace
         val words = content.split(Regex("\\s+")).filter { it.isNotEmpty() }
         val tokens = mutableListOf<ProcessedToken>()
         
         val indicesToHide = when (difficulty) {
             Difficulty.LOW -> {
-                // Hide 1-2 words
                 val count = Random.nextInt(1, 3).coerceAtMost(words.size)
                 pickRandomIndices(words.size, count)
             }
             Difficulty.MEDIUM -> {
-                // Hide ~25% words
                 val count = (words.size * 0.25).toInt().coerceAtLeast(1)
                 pickRandomIndices(words.size, count)
             }
             Difficulty.HIGH -> {
-                // Many words hidden, ~50%
                 val count = (words.size * 0.5).toInt().coerceAtLeast(1)
                 pickRandomIndices(words.size, count)
             }
         }
-
+        
         words.forEachIndexed { index, word ->
             val isHidden = indicesToHide.contains(index)
             tokens.add(
@@ -96,7 +92,6 @@ class TextProcessor @Inject constructor() {
     }
 
     fun validateWord(input: String, original: String): Boolean {
-        // Remove punctuation from original for check
         val cleanOriginal = original.filter { it.isLetterOrDigit() }.lowercase()
         val cleanInput = input.filter { it.isLetterOrDigit() }.lowercase()
         return cleanOriginal == cleanInput

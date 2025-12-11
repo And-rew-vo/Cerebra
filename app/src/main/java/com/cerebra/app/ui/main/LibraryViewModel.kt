@@ -21,7 +21,6 @@ class LibraryViewModel @Inject constructor(
     val texts: StateFlow<List<TextEntity>> = _texts
     
     init {
-        // Auto load for current user
         viewModelScope.launch {
             userPreferencesRepository.currentUserId.collect { userId ->
                 userId?.let {

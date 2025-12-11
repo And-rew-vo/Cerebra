@@ -30,7 +30,6 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun CerebraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -53,7 +52,7 @@ fun CerebraTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Will be default if not created, fine for now
+        typography = Typography,
         content = content
     )
 }

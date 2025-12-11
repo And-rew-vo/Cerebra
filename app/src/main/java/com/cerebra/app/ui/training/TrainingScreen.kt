@@ -184,35 +184,21 @@ fun TrainingView(
     val chunk = uiState.currentChunk ?: return
     val focusManager = LocalFocusManager.current
     
-    // Manage FocusRequesters for hidden tokens
+    
     val hiddenTokens = chunk.tokens.filter { it.isHidden }
-    // Map index to FocusRequester
     val focusRequesters = remember(chunk.id) { 
         hiddenTokens.associate { it.index to FocusRequester() } 
     }
 
-    // Auto-focus next logic
     LaunchedEffect(uiState.validationStatus) {
         val firstInvalid = hiddenTokens.firstOrNull { token ->
             uiState.validationStatus[token.index] != true
         }
         
         if (firstInvalid != null) {
-            // Only focus if the PREVIOUS one was just corrected or it's initial?
-            // To avoid stealing focus while typing?
-            // Actually, if I am typing in token A, and I finish it correctly, validation updates. 
-            // Then I want to jump to token B.
-            // Check if user input for firstInvalid is empty?
-            // This is tricky. Let's just focus if it's not focused?
-            // Better: FocusRequester requestFocus() is safe to call.
-            // But we need to know IF we should jump.
-            // Simple logic: Always focus the first invalid token IF the previous valid token was just completed?
-            // Let's rely on ImeActions "Next" manually or simple AutoFocus when validation passes.
         }
     }
     
-    // Better Auto-focus:
-    // When input changes and becomes valid, we find the NEXT hidden token and focus it.
     
     AnimatedContent(
         targetState = chunk,
@@ -247,7 +233,7 @@ fun TrainingView(
                     if (token.isHidden) {
                         val isCorrect = uiState.validationStatus[token.index] == true
                         val value = uiState.userInputs[token.index] ?: ""
-                        val width = (token.originalWord.length.coerceAtLeast(2) * 14).dp // Approximate width
+                        val width = (token.originalWord.length.coerceAtLeast(2) * 14).dp
 
                         val focusRequester = focusRequesters[token.index] ?: FocusRequester()
 
@@ -300,11 +286,10 @@ fun TrainingView(
                                 }
                             }
 
-                            // Tooltip Popup
                             if (uiState.activeHintTokenIndex == token.index) {
                                 Popup(
                                     alignment = Alignment.TopCenter,
-                                    onDismissRequest = { onRevealHint(token.index) } // Toggle off
+                                    onDismissRequest = { onRevealHint(token.index) }
                                 ) {
                                     Surface(
                                         shape = RoundedCornerShape(8.dp),
@@ -323,10 +308,8 @@ fun TrainingView(
                             }
                         }
                         
-                        // Trigger focus move if correct
                         LaunchedEffect(isCorrect) {
                             if (isCorrect) {
-                                // Find next hidden token index > token.index
                                 val nextToken = hiddenTokens.firstOrNull { it.index > token.index }
                                 if (nextToken != null) {
                                     focusRequesters[nextToken.index]?.requestFocus()
@@ -348,7 +331,7 @@ fun TrainingView(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Auto-advance logic ONLY (Buttons removed)
+            
             val allCorrect = hiddenTokens.isNotEmpty() && hiddenTokens.all { uiState.validationStatus[it.index] == true }
             
             LaunchedEffect(allCorrect) {

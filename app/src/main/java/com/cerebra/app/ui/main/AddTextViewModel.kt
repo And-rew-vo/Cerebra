@@ -17,7 +17,7 @@ class AddTextViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun saveText(title: String, content: String, onSuccess: () -> Unit) {
-        if (title.isBlank() || content.isBlank()) return // Simple validation
+        if (title.isBlank() || content.isBlank()) return
 
         viewModelScope.launch {
             val userId = userPreferencesRepository.currentUserId.first()
@@ -26,7 +26,7 @@ class AddTextViewModel @Inject constructor(
                     userId = userId,
                     title = title,
                     content = content,
-                    progress = "", // Initial state
+                    progress = "",
                     lastTrainedAt = System.currentTimeMillis()
                 )
                 textRepository.saveText(text)

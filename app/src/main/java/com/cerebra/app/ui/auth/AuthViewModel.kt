@@ -18,7 +18,6 @@ data class AuthUiState(
     val error: String? = null,
     val isLoggedIn: Boolean = false,
     val user: UserEntity? = null,
-    // Validation Errors
     val nameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null
@@ -47,15 +46,12 @@ class AuthViewModel @Inject constructor(
                                 user = user
                             )
                         } else {
-                            // User ID exists but user not found in DB? Inconsistency.
-                            // Maybe logout or just stop loading.
                             _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = false)
                         }
                     } catch (e: Exception) {
                         _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
                     }
                 } else {
-                     // Ensure state is reset if ID is null (logout)
                      _uiState.value = AuthUiState() 
                 }
             }
@@ -69,7 +65,6 @@ class AuthViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
                 val newUser = UserEntity(name = name, email = email, password = password)
-                // Check if user exists happens in Repo/DAO (constraint) usually
                 authRepository.registerUser(newUser)
                 login(email, password)
             } catch (e: Exception) {

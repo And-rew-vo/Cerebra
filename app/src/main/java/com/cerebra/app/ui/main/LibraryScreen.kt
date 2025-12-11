@@ -16,7 +16,6 @@ import com.cerebra.app.ui.navigation.Screen
 
 @Composable
 fun LibraryScreen(
-    // user removed as it was unused
     onNavigateToTraining: (Int) -> Unit,
     onNavigateToAddText: () -> Unit,
     viewModel: LibraryViewModel = hiltViewModel()

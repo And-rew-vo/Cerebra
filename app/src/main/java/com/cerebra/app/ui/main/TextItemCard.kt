@@ -12,8 +12,6 @@ import org.json.JSONObject
 
 @Composable
 fun TextItemCard(text: TextEntity, onClick: () -> Unit) {
-    // Parse progress. Assuming JSON `{"percent": 50, ...}` or simple string "50" logic if we were simple.
-    // For robust MVP: If it's not JSON, try int. Default 0.
     val progressPercent = try {
         if (text.progress.startsWith("{")) {
             JSONObject(text.progress).optInt("percent", 0)

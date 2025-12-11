@@ -58,11 +58,9 @@ class TrainingViewModel @Inject constructor(
                     textEntity = text
                 )
                 
-                // Resume Logic
-                // Fix: Allow resume even if index is 0, provided we have the shuffle data.
+                
                 if (!text.shuffledIndicesJson.isNullOrEmpty()) {
                     val indices = parseIndices(text.shuffledIndicesJson)
-                    // We need difficulty to recreate chunks. Reading it from legacy 'progress' or defaulting.
                     val diff = parseDifficulty(text.progress) ?: Difficulty.LOW
                     startTraining(
                         difficulty = diff, 
@@ -108,10 +106,8 @@ class TrainingViewModel @Inject constructor(
     ) {
         var text = _uiState.value.textEntity ?: return
         
-        // Update Text if changed
         if (title != null && content != null && (title != text.title || content != text.content)) {
             text = text.copy(title = title, content = content)
-            // Persist Update
             viewModelScope.launch {
                 repository.updateText(text)
             }
@@ -127,7 +123,6 @@ class TrainingViewModel @Inject constructor(
         }
 
         if (startIndex >= session.chunks.size) {
-            // Already finished?
             _uiState.value = _uiState.value.copy(phase = TrainingPhase.COMPLETED)
             return
         }
@@ -146,8 +141,7 @@ class TrainingViewModel @Inject constructor(
             validationStatus = emptyMap()
         )
         
-        // Critical Fix: Persist state immediately upon starting so we can resume Chunk 0 if needed.
-        // Only do this if we generated new indices (i.e., not just restoring).
+        
         if (restoredIndices.isEmpty()) {
              saveProgress()
         }
@@ -159,16 +153,14 @@ class TrainingViewModel @Inject constructor(
         
         viewModelScope.launch {
             if (text != null) {
-                // Immediate DB Reset
                 repository.updateText(
                     text.copy(
-                        progress = "0", // Reset legacy
+                        progress = "0",
                         savedChunkIndex = 0,
                         shuffledIndicesJson = null,
                         lastTrainedAt = System.currentTimeMillis()
                     )
                 )
-                // Update local state to Setup phase
                  _uiState.value = _uiState.value.copy(
                      textEntity = text,
                      phase = TrainingPhase.SETUP,
@@ -281,7 +273,6 @@ class TrainingViewModel @Inject constructor(
             repository.updateText(text.copy(
                 progress = json.toString(), 
                 savedChunkIndex = _uiState.value.chunks.size, 
-                // Keep indices? Or clear? Keeping allows review if we implement it.
                 lastTrainedAt = System.currentTimeMillis()
             ))
         }
