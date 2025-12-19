@@ -1,5 +1,6 @@
 package com.cerebra.app.ui.main;
 
+import androidx.lifecycle.SavedStateHandle;
 import com.cerebra.app.data.repository.UserPreferencesRepository;
 import com.cerebra.app.domain.repository.TextRepository;
 import dagger.internal.DaggerGenerated;
@@ -27,24 +28,29 @@ public final class AddTextViewModel_Factory implements Factory<AddTextViewModel>
 
   private final Provider<UserPreferencesRepository> userPreferencesRepositoryProvider;
 
+  private final Provider<SavedStateHandle> savedStateHandleProvider;
+
   public AddTextViewModel_Factory(Provider<TextRepository> textRepositoryProvider,
-      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider,
+      Provider<SavedStateHandle> savedStateHandleProvider) {
     this.textRepositoryProvider = textRepositoryProvider;
     this.userPreferencesRepositoryProvider = userPreferencesRepositoryProvider;
+    this.savedStateHandleProvider = savedStateHandleProvider;
   }
 
   @Override
   public AddTextViewModel get() {
-    return newInstance(textRepositoryProvider.get(), userPreferencesRepositoryProvider.get());
+    return newInstance(textRepositoryProvider.get(), userPreferencesRepositoryProvider.get(), savedStateHandleProvider.get());
   }
 
   public static AddTextViewModel_Factory create(Provider<TextRepository> textRepositoryProvider,
-      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider) {
-    return new AddTextViewModel_Factory(textRepositoryProvider, userPreferencesRepositoryProvider);
+      Provider<UserPreferencesRepository> userPreferencesRepositoryProvider,
+      Provider<SavedStateHandle> savedStateHandleProvider) {
+    return new AddTextViewModel_Factory(textRepositoryProvider, userPreferencesRepositoryProvider, savedStateHandleProvider);
   }
 
   public static AddTextViewModel newInstance(TextRepository textRepository,
-      UserPreferencesRepository userPreferencesRepository) {
-    return new AddTextViewModel(textRepository, userPreferencesRepository);
+      UserPreferencesRepository userPreferencesRepository, SavedStateHandle savedStateHandle) {
+    return new AddTextViewModel(textRepository, userPreferencesRepository, savedStateHandle);
   }
 }

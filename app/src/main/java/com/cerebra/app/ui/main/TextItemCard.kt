@@ -26,14 +26,20 @@ fun TextItemCard(text: TextEntity, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text.title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            LinearProgressIndicator(
-                progress = progressPercent / 100f,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text("$progressPercent%", style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.End))
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text.title, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = progressPercent / 100f,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("$progressPercent%", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

@@ -12,6 +12,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -40,9 +42,34 @@ import com.cerebra.app.domain.ProcessedToken
 @Composable
 fun TrainingScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToEdit: (Int) -> Unit,
     viewModel: TrainingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Удалить текст?") },
+            text = { Text("Вы уверены, что хотите удалить этот текст? Это действие нельзя отменить.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteText { onNavigateBack() }
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Удалить", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -54,6 +81,14 @@ fun TrainingScreen(
                     }
                 },
                 actions = {
+                    if (uiState.phase != TrainingPhase.TRAINING) {
+                        IconButton(onClick = { uiState.textEntity?.id?.let { onNavigateToEdit(it) } }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Редактировать")
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                        }
+                    }
                     IconButton(onClick = { viewModel.restartTraining() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Начать заново")
                     }

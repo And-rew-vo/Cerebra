@@ -38,7 +38,10 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(texts) { text ->
-                    TextItemCard(text, onClick = { onNavigateToTraining(text.id) })
+                    TextItemCard(
+                        text = text,
+                        onClick = { onNavigateToTraining(text.id) }
+                    )
                 }
             }
         }

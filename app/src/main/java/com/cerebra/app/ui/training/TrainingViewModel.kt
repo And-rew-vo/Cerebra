@@ -277,4 +277,12 @@ class TrainingViewModel @Inject constructor(
             ))
         }
     }
+
+    fun deleteText(onDeleted: () -> Unit) {
+        val text = _uiState.value.textEntity ?: return
+        viewModelScope.launch {
+            repository.deleteText(text)
+            onDeleted()
+        }
+    }
 }

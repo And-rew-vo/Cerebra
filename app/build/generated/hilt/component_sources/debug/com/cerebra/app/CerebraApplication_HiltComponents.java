@@ -1,10 +1,12 @@
 package com.cerebra.app;
 
 import com.cerebra.app.di.DatabaseModule;
+import com.cerebra.app.di.NetworkModule;
 import com.cerebra.app.di.RepositoryModule;
 import com.cerebra.app.ui.MainViewModel_HiltModules;
 import com.cerebra.app.ui.auth.AuthViewModel_HiltModules;
 import com.cerebra.app.ui.main.AddTextViewModel_HiltModules;
+import com.cerebra.app.ui.main.CommonTextDetailViewModel_HiltModules;
 import com.cerebra.app.ui.main.HomeViewModel_HiltModules;
 import com.cerebra.app.ui.main.LibraryViewModel_HiltModules;
 import com.cerebra.app.ui.main.ProfileViewModel_HiltModules;
@@ -137,6 +139,7 @@ public final class CerebraApplication_HiltComponents {
           ServiceCBuilderModule.class,
           DatabaseModule.class,
           HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule.class,
+          NetworkModule.class,
           RepositoryModule.class
       }
   )
@@ -164,6 +167,7 @@ public final class CerebraApplication_HiltComponents {
           AuthViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
+          CommonTextDetailViewModel_HiltModules.KeyModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HomeViewModel_HiltModules.KeyModule.class,
           LibraryViewModel_HiltModules.KeyModule.class,
@@ -207,6 +211,7 @@ public final class CerebraApplication_HiltComponents {
       modules = {
           AddTextViewModel_HiltModules.BindsModule.class,
           AuthViewModel_HiltModules.BindsModule.class,
+          CommonTextDetailViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
           LibraryViewModel_HiltModules.BindsModule.class,

@@ -6,18 +6,25 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import com.cerebra.app.data.api.PoetryDbApi;
 import com.cerebra.app.data.local.AppDatabase;
 import com.cerebra.app.data.local.dao.TextDao;
 import com.cerebra.app.data.local.dao.UserDao;
 import com.cerebra.app.data.repository.AuthRepositoryImpl;
+import com.cerebra.app.data.repository.PoetryRepositoryImpl;
 import com.cerebra.app.data.repository.TextRepositoryImpl;
 import com.cerebra.app.data.repository.UserPreferencesRepository;
 import com.cerebra.app.di.DatabaseModule;
 import com.cerebra.app.di.DatabaseModule_ProvideAppDatabaseFactory;
 import com.cerebra.app.di.DatabaseModule_ProvideTextDaoFactory;
 import com.cerebra.app.di.DatabaseModule_ProvideUserDaoFactory;
+import com.cerebra.app.di.NetworkModule;
+import com.cerebra.app.di.NetworkModule_ProvideOkHttpClientFactory;
+import com.cerebra.app.di.NetworkModule_ProvidePoetryDbApiFactory;
+import com.cerebra.app.di.NetworkModule_ProvideRetrofitFactory;
 import com.cerebra.app.domain.TextProcessor;
 import com.cerebra.app.domain.repository.AuthRepository;
+import com.cerebra.app.domain.repository.PoetryRepository;
 import com.cerebra.app.domain.repository.TextRepository;
 import com.cerebra.app.ui.MainViewModel;
 import com.cerebra.app.ui.MainViewModel_HiltModules_KeyModule_ProvideFactory;
@@ -25,6 +32,8 @@ import com.cerebra.app.ui.auth.AuthViewModel;
 import com.cerebra.app.ui.auth.AuthViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.cerebra.app.ui.main.AddTextViewModel;
 import com.cerebra.app.ui.main.AddTextViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.cerebra.app.ui.main.CommonTextDetailViewModel;
+import com.cerebra.app.ui.main.CommonTextDetailViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.cerebra.app.ui.main.HomeViewModel;
 import com.cerebra.app.ui.main.HomeViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.cerebra.app.ui.main.LibraryViewModel;
@@ -58,6 +67,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Generated;
 import javax.inject.Provider;
+import okhttp3.OkHttpClient;
+import retrofit2.Retrofit;
 
 @DaggerGenerated
 @Generated(
@@ -105,6 +116,15 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
     public Builder hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule(
         HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule) {
       Preconditions.checkNotNull(hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule);
+      return this;
+    }
+
+    /**
+     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
+     */
+    @Deprecated
+    public Builder networkModule(NetworkModule networkModule) {
+      Preconditions.checkNotNull(networkModule);
       return this;
     }
 
@@ -399,7 +419,7 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
 
     @Override
     public Set<String> getViewModelKeys() {
-      return SetBuilder.<String>newSetBuilder(7).add(AddTextViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(AuthViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(LibraryViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MainViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ProfileViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(TrainingViewModel_HiltModules_KeyModule_ProvideFactory.provide()).build();
+      return SetBuilder.<String>newSetBuilder(8).add(AddTextViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(AuthViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(CommonTextDetailViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(LibraryViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MainViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ProfileViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(TrainingViewModel_HiltModules_KeyModule_ProvideFactory.provide()).build();
     }
 
     @Override
@@ -431,6 +451,8 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
 
     private Provider<AuthViewModel> authViewModelProvider;
 
+    private Provider<CommonTextDetailViewModel> commonTextDetailViewModelProvider;
+
     private Provider<HomeViewModel> homeViewModelProvider;
 
     private Provider<LibraryViewModel> libraryViewModelProvider;
@@ -456,16 +478,17 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
         final ViewModelLifecycle viewModelLifecycleParam) {
       this.addTextViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
       this.authViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
-      this.homeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
-      this.libraryViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
-      this.mainViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
-      this.profileViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 5);
-      this.trainingViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
+      this.commonTextDetailViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.homeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.libraryViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
+      this.mainViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 5);
+      this.profileViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
+      this.trainingViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
     }
 
     @Override
     public Map<String, Provider<ViewModel>> getHiltViewModelMap() {
-      return MapBuilder.<String, Provider<ViewModel>>newMapBuilder(7).put("com.cerebra.app.ui.main.AddTextViewModel", ((Provider) addTextViewModelProvider)).put("com.cerebra.app.ui.auth.AuthViewModel", ((Provider) authViewModelProvider)).put("com.cerebra.app.ui.main.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.cerebra.app.ui.main.LibraryViewModel", ((Provider) libraryViewModelProvider)).put("com.cerebra.app.ui.MainViewModel", ((Provider) mainViewModelProvider)).put("com.cerebra.app.ui.main.ProfileViewModel", ((Provider) profileViewModelProvider)).put("com.cerebra.app.ui.training.TrainingViewModel", ((Provider) trainingViewModelProvider)).build();
+      return MapBuilder.<String, Provider<ViewModel>>newMapBuilder(8).put("com.cerebra.app.ui.main.AddTextViewModel", ((Provider) addTextViewModelProvider)).put("com.cerebra.app.ui.auth.AuthViewModel", ((Provider) authViewModelProvider)).put("com.cerebra.app.ui.main.CommonTextDetailViewModel", ((Provider) commonTextDetailViewModelProvider)).put("com.cerebra.app.ui.main.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.cerebra.app.ui.main.LibraryViewModel", ((Provider) libraryViewModelProvider)).put("com.cerebra.app.ui.MainViewModel", ((Provider) mainViewModelProvider)).put("com.cerebra.app.ui.main.ProfileViewModel", ((Provider) profileViewModelProvider)).put("com.cerebra.app.ui.training.TrainingViewModel", ((Provider) trainingViewModelProvider)).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -490,24 +513,27 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.cerebra.app.ui.main.AddTextViewModel 
-          return (T) new AddTextViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
+          return (T) new AddTextViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get(), viewModelCImpl.savedStateHandle);
 
           case 1: // com.cerebra.app.ui.auth.AuthViewModel 
           return (T) new AuthViewModel(singletonCImpl.bindAuthRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
 
-          case 2: // com.cerebra.app.ui.main.HomeViewModel 
+          case 2: // com.cerebra.app.ui.main.CommonTextDetailViewModel 
+          return (T) new CommonTextDetailViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.bindPoetryRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
+
+          case 3: // com.cerebra.app.ui.main.HomeViewModel 
           return (T) new HomeViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
 
-          case 3: // com.cerebra.app.ui.main.LibraryViewModel 
-          return (T) new LibraryViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
+          case 4: // com.cerebra.app.ui.main.LibraryViewModel 
+          return (T) new LibraryViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.bindPoetryRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
 
-          case 4: // com.cerebra.app.ui.MainViewModel 
+          case 5: // com.cerebra.app.ui.MainViewModel 
           return (T) new MainViewModel(singletonCImpl.userPreferencesRepositoryProvider.get());
 
-          case 5: // com.cerebra.app.ui.main.ProfileViewModel 
+          case 6: // com.cerebra.app.ui.main.ProfileViewModel 
           return (T) new ProfileViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
 
-          case 6: // com.cerebra.app.ui.training.TrainingViewModel 
+          case 7: // com.cerebra.app.ui.training.TrainingViewModel 
           return (T) new TrainingViewModel(singletonCImpl.bindTextRepositoryProvider.get(), new TextProcessor(), viewModelCImpl.savedStateHandle);
 
           default: throw new AssertionError(id);
@@ -601,6 +627,16 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
 
     private Provider<AuthRepository> bindAuthRepositoryProvider;
 
+    private Provider<OkHttpClient> provideOkHttpClientProvider;
+
+    private Provider<Retrofit> provideRetrofitProvider;
+
+    private Provider<PoetryDbApi> providePoetryDbApiProvider;
+
+    private Provider<PoetryRepositoryImpl> poetryRepositoryImplProvider;
+
+    private Provider<PoetryRepository> bindPoetryRepositoryProvider;
+
     private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
       this.applicationContextModule = applicationContextModuleParam;
       initialize(applicationContextModuleParam);
@@ -623,6 +659,11 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
       this.userPreferencesRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserPreferencesRepository>(singletonCImpl, 2));
       this.authRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 3);
       this.bindAuthRepositoryProvider = DoubleCheck.provider((Provider) authRepositoryImplProvider);
+      this.provideOkHttpClientProvider = DoubleCheck.provider(new SwitchingProvider<OkHttpClient>(singletonCImpl, 7));
+      this.provideRetrofitProvider = DoubleCheck.provider(new SwitchingProvider<Retrofit>(singletonCImpl, 6));
+      this.providePoetryDbApiProvider = DoubleCheck.provider(new SwitchingProvider<PoetryDbApi>(singletonCImpl, 5));
+      this.poetryRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 4);
+      this.bindPoetryRepositoryProvider = DoubleCheck.provider((Provider) poetryRepositoryImplProvider);
     }
 
     @Override
@@ -669,6 +710,18 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
 
           case 3: // com.cerebra.app.data.repository.AuthRepositoryImpl 
           return (T) new AuthRepositoryImpl(singletonCImpl.userDao());
+
+          case 4: // com.cerebra.app.data.repository.PoetryRepositoryImpl 
+          return (T) new PoetryRepositoryImpl(singletonCImpl.providePoetryDbApiProvider.get());
+
+          case 5: // com.cerebra.app.data.api.PoetryDbApi 
+          return (T) NetworkModule_ProvidePoetryDbApiFactory.providePoetryDbApi(singletonCImpl.provideRetrofitProvider.get());
+
+          case 6: // retrofit2.Retrofit 
+          return (T) NetworkModule_ProvideRetrofitFactory.provideRetrofit(singletonCImpl.provideOkHttpClientProvider.get());
+
+          case 7: // okhttp3.OkHttpClient 
+          return (T) NetworkModule_ProvideOkHttpClientFactory.provideOkHttpClient();
 
           default: throw new AssertionError(id);
         }

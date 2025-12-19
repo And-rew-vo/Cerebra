@@ -1,8 +1,10 @@
 package com.cerebra.app.di
 
 import com.cerebra.app.data.repository.AuthRepositoryImpl
+import com.cerebra.app.data.repository.PoetryRepositoryImpl
 import com.cerebra.app.data.repository.TextRepositoryImpl
 import com.cerebra.app.domain.repository.AuthRepository
+import com.cerebra.app.domain.repository.PoetryRepository
 import com.cerebra.app.domain.repository.TextRepository
 import dagger.Binds
 import dagger.Module
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindTextRepository(
         textRepositoryImpl: TextRepositoryImpl
     ): TextRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPoetryRepository(
+        poetryRepositoryImpl: PoetryRepositoryImpl
+    ): PoetryRepository
 }

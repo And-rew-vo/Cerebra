@@ -21,6 +21,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.navigation.navArgument
 import com.cerebra.app.ui.auth.AuthViewModel
 import com.cerebra.app.ui.auth.LoginScreen
@@ -143,6 +148,9 @@ fun CerebraNavGraph(
                         },
                         onNavigateToAddText = {
                             navController.navigate(Screen.AddText.route)
+                        },
+                        onNavigateToCommonText = { textId ->
+                            navController.navigate(Screen.CommonTextDetail.createRoute(textId))
                         }
                     )
                 }
@@ -162,7 +170,14 @@ fun CerebraNavGraph(
                 }
             }
             
-            composable(Screen.AddText.route) {
+            composable(
+                route = Screen.AddText.route,
+                arguments = listOf(navArgument("textId") { 
+                    type = NavType.StringType 
+                    nullable = true
+                    defaultValue = null
+                })
+            ) {
                 AddTextScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -173,8 +188,45 @@ fun CerebraNavGraph(
                 arguments = listOf(navArgument("textId") { type = NavType.IntType })
             ) {
                 TrainingScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { textId ->
+                         navController.navigate(Screen.AddText.createRoute(textId))
+                    }
                 )
+            }
+            composable(
+                route = Screen.CommonTextDetail.route,
+                arguments = listOf(
+                    navArgument("textId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val textId = backStackEntry.arguments?.getString("textId") ?: ""
+                
+                val detailViewModel: com.cerebra.app.ui.main.CommonTextDetailViewModel = hiltViewModel()
+                
+                LaunchedEffect(textId) {
+                    detailViewModel.loadTextDetail(textId)
+                }
+                
+                val textItem by detailViewModel.textItem.collectAsState()
+
+                if (textItem != null) {
+                    com.cerebra.app.ui.main.CommonTextDetailScreen(
+                        textItem = textItem!!,
+                        onBackClick = { navController.popBackStack() },
+                        onStartTrainingClick = { item ->
+                            detailViewModel.saveAndStartTraining(item) { newId ->
+                                navController.navigate(Screen.Training.createRoute(newId.toInt())) {
+                                    popUpTo(Screen.Library.route)
+                                }
+                            }
+                        }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
         }
     }

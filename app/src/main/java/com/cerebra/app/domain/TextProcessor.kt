@@ -50,30 +50,36 @@ class TextProcessor @Inject constructor() {
     }
 
     private fun processChunk(content: String, chunkId: Int, difficulty: Difficulty): Chunk {
-        val words = content.split(Regex("\\s+")).filter { it.isNotEmpty() }
-        val tokens = mutableListOf<ProcessedToken>()
+        val tokenPattern = Regex("([\\p{L}\\d]+)|([^\\p{L}\\d\\s]+)")
+        val allMatches = tokenPattern.findAll(content)
+        val tokensList = allMatches.map { it.value }.toList()
+
+        val wordIndices = tokensList.mapIndexedNotNull { index, s ->
+            if (s.any { it.isLetterOrDigit() }) index else null
+        }
         
         val indicesToHide = when (difficulty) {
             Difficulty.LOW -> {
-                val count = Random.nextInt(1, 3).coerceAtMost(words.size)
-                pickRandomIndices(words.size, count)
+                val count = Random.nextInt(1, 3).coerceAtMost(wordIndices.size)
+                pickRandomIndicesFromList(wordIndices, count)
             }
             Difficulty.MEDIUM -> {
-                val count = (words.size * 0.25).toInt().coerceAtLeast(1)
-                pickRandomIndices(words.size, count)
+                val count = (wordIndices.size * 0.25).toInt().coerceAtLeast(1)
+                pickRandomIndicesFromList(wordIndices, count)
             }
             Difficulty.HIGH -> {
-                val count = (words.size * 0.5).toInt().coerceAtLeast(1)
-                pickRandomIndices(words.size, count)
+                val count = (wordIndices.size * 0.5).toInt().coerceAtLeast(1)
+                pickRandomIndicesFromList(wordIndices, count)
             }
         }
         
-        words.forEachIndexed { index, word ->
+        val tokens = mutableListOf<ProcessedToken>()
+        tokensList.forEachIndexed { index, tokenStr ->
             val isHidden = indicesToHide.contains(index)
             tokens.add(
                 ProcessedToken(
-                    originalWord = word,
-                    displayValue = if (isHidden) "" else word,
+                    originalWord = tokenStr,
+                    displayValue = if (isHidden) "" else tokenStr,
                     isHidden = isHidden,
                     index = index
                 )
@@ -83,13 +89,11 @@ class TextProcessor @Inject constructor() {
         return Chunk(chunkId, tokens, content)
     }
 
-    private fun pickRandomIndices(total: Int, count: Int): Set<Int> {
-        val indices = mutableSetOf<Int>()
-        while (indices.size < count && indices.size < total) {
-            indices.add(Random.nextInt(total))
-        }
-        return indices
+    private fun pickRandomIndicesFromList(validIndices: List<Int>, count: Int): Set<Int> {
+        return validIndices.asSequence().shuffled().take(count).toSet() 
     }
+
+
 
     fun validateWord(input: String, original: String): Boolean {
         val cleanOriginal = original.filter { it.isLetterOrDigit() }.lowercase()
