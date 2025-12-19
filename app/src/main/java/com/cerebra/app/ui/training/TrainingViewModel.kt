@@ -97,6 +97,17 @@ class TrainingViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(difficulty = difficulty)
     }
 
+    fun saveText(title: String, content: String) {
+        val text = _uiState.value.textEntity ?: return
+        if (title != text.title || content != text.content) {
+            val updatedText = text.copy(title = title, content = content)
+            viewModelScope.launch {
+                repository.updateText(updatedText)
+            }
+            _uiState.value = _uiState.value.copy(textEntity = updatedText)
+        }
+    }
+
     fun startTraining(
         difficulty: Difficulty,
         title: String? = null,

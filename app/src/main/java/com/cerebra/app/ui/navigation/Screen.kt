@@ -10,9 +10,7 @@ sealed class Screen(val route: String) {
     object Training : Screen("training/{textId}") {
         fun createRoute(textId: Int) = "training/$textId"
     }
-    object AddText : Screen("add_text?textId={textId}") {
-        fun createRoute(textId: Int? = null) = if (textId != null) "add_text?textId=$textId" else "add_text"
-    }
+    object AddText : Screen("add_text")
     object CommonTextDetail : Screen("detail/{textId}") {
         fun createRoute(textId: String) = "detail/$textId"
     }

@@ -513,7 +513,7 @@ public final class DaggerCerebraApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.cerebra.app.ui.main.AddTextViewModel 
-          return (T) new AddTextViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get(), viewModelCImpl.savedStateHandle);
+          return (T) new AddTextViewModel(singletonCImpl.bindTextRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());
 
           case 1: // com.cerebra.app.ui.auth.AuthViewModel 
           return (T) new AuthViewModel(singletonCImpl.bindAuthRepositoryProvider.get(), singletonCImpl.userPreferencesRepositoryProvider.get());

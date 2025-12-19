@@ -170,14 +170,7 @@ fun CerebraNavGraph(
                 }
             }
             
-            composable(
-                route = Screen.AddText.route,
-                arguments = listOf(navArgument("textId") { 
-                    type = NavType.StringType 
-                    nullable = true
-                    defaultValue = null
-                })
-            ) {
+            composable(Screen.AddText.route) {
                 AddTextScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -188,10 +181,7 @@ fun CerebraNavGraph(
                 arguments = listOf(navArgument("textId") { type = NavType.IntType })
             ) {
                 TrainingScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { textId ->
-                         navController.navigate(Screen.AddText.createRoute(textId))
-                    }
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
             composable(

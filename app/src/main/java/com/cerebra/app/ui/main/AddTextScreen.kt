@@ -15,17 +15,8 @@ fun AddTextScreen(
     onNavigateBack: () -> Unit,
     viewModel: AddTextViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-
-    LaunchedEffect(uiState) {
-        uiState?.let {
-            title = it.title
-            content = it.content
-        }
-    }
 
     Scaffold(
         topBar = {

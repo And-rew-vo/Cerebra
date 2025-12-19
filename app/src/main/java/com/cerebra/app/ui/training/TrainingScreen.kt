@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -27,6 +26,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -42,10 +42,12 @@ import com.cerebra.app.domain.ProcessedToken
 @Composable
 fun TrainingScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToEdit: (Int) -> Unit,
     viewModel: TrainingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -71,22 +73,35 @@ fun TrainingScreen(
         )
     }
 
+    LaunchedEffect(uiState.textEntity) {
+        if (uiState.phase == TrainingPhase.SETUP) {
+            title = uiState.textEntity?.title ?: ""
+            content = uiState.textEntity?.content ?: ""
+        }
+    }
+
+    val onBack = {
+        if (uiState.phase == TrainingPhase.SETUP) {
+            viewModel.saveText(title, content)
+        }
+        onNavigateBack()
+    }
+
+    BackHandler(onBack = onBack)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Тренировка") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
                     if (uiState.phase != TrainingPhase.TRAINING) {
-                        IconButton(onClick = { uiState.textEntity?.id?.let { onNavigateToEdit(it) } }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Редактировать")
-                        }
                         IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                             Icon(Icons.Default.Delete, contentDescription = "Удалить")
                         }
                     }
                     IconButton(onClick = { viewModel.restartTraining() }) {
@@ -103,10 +118,12 @@ fun TrainingScreen(
                 when (uiState.phase) {
                     TrainingPhase.SETUP -> SetupView(
                         difficulty = uiState.difficulty,
-                        initialTitle = uiState.textEntity?.title ?: "",
-                        initialContent = uiState.textEntity?.content ?: "",
+                        title = title,
+                        content = content,
+                        onTitleChange = { title = it },
+                        onContentChange = { content = it },
                         onDifficultyChange = viewModel::setDifficulty,
-                        onStart = { title, content -> viewModel.startTraining(uiState.difficulty, title, content) }
+                        onStart = { t, c -> viewModel.startTraining(uiState.difficulty, t, c) }
                     )
                     TrainingPhase.TRAINING -> TrainingView(
                         uiState = uiState,
@@ -124,14 +141,13 @@ fun TrainingScreen(
 @Composable
 fun SetupView(
     difficulty: Difficulty,
-    initialTitle: String,
-    initialContent: String,
+    title: String,
+    content: String,
+    onTitleChange: (String) -> Unit,
+    onContentChange: (String) -> Unit,
     onDifficultyChange: (Difficulty) -> Unit,
     onStart: (String, String) -> Unit
 ) {
-    var title by remember { mutableStateOf(initialTitle) }
-    var content by remember { mutableStateOf(initialContent) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -140,12 +156,9 @@ fun SetupView(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Настройки тренировки", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(24.dp))
-        
         OutlinedTextField(
             value = title,
-            onValueChange = { title = it },
+            onValueChange = onTitleChange,
             label = { Text("Название") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -154,7 +167,7 @@ fun SetupView(
 
         OutlinedTextField(
             value = content,
-            onValueChange = { content = it },
+            onValueChange = onContentChange,
             label = { Text("Текст") },
             modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp, max = 300.dp),
             minLines = 5,
