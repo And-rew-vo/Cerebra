@@ -1,0 +1,103 @@
+package com.cerebra.app.domain
+
+import javax.inject.Inject
+import kotlin.random.Random
+
+enum class Difficulty { LOW, MEDIUM, HIGH }
+
+data class ProcessedToken(
+    val originalWord: String,
+    val displayValue: String,
+    val isHidden: Boolean,
+    val index: Int
+)
+
+data class Trainingsession(
+    val chunks: List<Chunk>,
+    val difficulty: Difficulty
+)
+
+data class Chunk(
+    val id: Int,
+    val tokens: List<ProcessedToken>,
+    val content: String
+)
+
+class TextProcessor @Inject constructor() {
+
+    fun createSession(content: String, difficulty: Difficulty): Trainingsession {
+        val chunks = when (difficulty) {
+            Difficulty.LOW, Difficulty.MEDIUM -> splitIntoSentences(content)
+            Difficulty.HIGH -> splitIntoParagraphs(content)
+        }
+
+        val processedChunks = chunks.mapIndexed { index, chunkText ->
+            processChunk(chunkText, index, difficulty)
+        }
+
+        return Trainingsession(processedChunks, difficulty)
+    }
+
+    private fun splitIntoSentences(content: String): List<String> {
+        val sentences = mutableListOf<String>()
+        val regex = Regex("(?<=[.!?])\\s+")
+        sentences.addAll(content.split(regex).filter { it.isNotBlank() })
+        return sentences
+    }
+
+    private fun splitIntoParagraphs(content: String): List<String> {
+        return content.split("\n\n", "\r\n\r\n").filter { it.isNotBlank() }
+    }
+
+    private fun processChunk(content: String, chunkId: Int, difficulty: Difficulty): Chunk {
+        val tokenPattern = Regex("([\\p{L}\\d]+)|([^\\p{L}\\d\\s]+)")
+        val allMatches = tokenPattern.findAll(content)
+        val tokensList = allMatches.map { it.value }.toList()
+
+        val wordIndices = tokensList.mapIndexedNotNull { index, s ->
+            if (s.any { it.isLetterOrDigit() }) index else null
+        }
+        
+        val indicesToHide = when (difficulty) {
+            Difficulty.LOW -> {
+                val count = Random.nextInt(1, 3).coerceAtMost(wordIndices.size)
+                pickRandomIndicesFromList(wordIndices, count)
+            }
+            Difficulty.MEDIUM -> {
+                val count = (wordIndices.size * 0.25).toInt().coerceAtLeast(1)
+                pickRandomIndicesFromList(wordIndices, count)
+            }
+            Difficulty.HIGH -> {
+                val count = (wordIndices.size * 0.5).toInt().coerceAtLeast(1)
+                pickRandomIndicesFromList(wordIndices, count)
+            }
+        }
+        
+        val tokens = mutableListOf<ProcessedToken>()
+        tokensList.forEachIndexed { index, tokenStr ->
+            val isHidden = indicesToHide.contains(index)
+            tokens.add(
+                ProcessedToken(
+                    originalWord = tokenStr,
+                    displayValue = if (isHidden) "" else tokenStr,
+                    isHidden = isHidden,
+                    index = index
+                )
+            )
+        }
+
+        return Chunk(chunkId, tokens, content)
+    }
+
+    private fun pickRandomIndicesFromList(validIndices: List<Int>, count: Int): Set<Int> {
+        return validIndices.asSequence().shuffled().take(count).toSet() 
+    }
+
+
+
+    fun validateWord(input: String, original: String): Boolean {
+        val cleanOriginal = original.filter { it.isLetterOrDigit() }.lowercase()
+        val cleanInput = input.filter { it.isLetterOrDigit() }.lowercase()
+        return cleanOriginal == cleanInput
+    }
+}
